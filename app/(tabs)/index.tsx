@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -5,8 +6,14 @@ import { Leaf } from 'lucide-react-native';
 import { Typography, useThemeColor } from 'heroui-native';
 
 import { AddHabitSheet } from '@/components/bloom/AddHabitSheet';
+import {
+  CoachingCard,
+  CoachingConfirmation,
+  ReflectionPromptCard,
+} from '@/components/bloom/CoachingCard';
 import { HabitCard } from '@/components/bloom/HabitCard';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
+import { getActiveCoachingSuggestion, getReflectionCandidate } from '@/lib/bloom/coaching';
 import {
   isHabitCompleteOnDate,
   isHabitScheduledOnDate,
@@ -25,6 +32,11 @@ export default function TodayScreen() {
   const habits = useBloomStore((state) => state.habits);
   const goal = useBloomStore((state) => state.goal);
   const toggleHabit = useBloomStore((state) => state.toggleHabitForToday);
+  const reflections = useBloomStore((state) => state.reflections);
+  const coachingDecisions = useBloomStore((state) => state.coachingDecisions);
+  const acceptSuggestion = useBloomStore((state) => state.acceptCoachingSuggestion);
+  const rejectSuggestion = useBloomStore((state) => state.rejectCoachingSuggestion);
+  const [confirmation, setConfirmation] = useState<string>();
   const [accent] = useThemeColor(['accent']);
   const today = toLocalDateKey();
   const todaysHabits = habits.filter(
@@ -32,6 +44,10 @@ export default function TodayScreen() {
   );
   const completedCount = todaysHabits.filter((habit) => isHabitCompleteOnDate(habit, today)).length;
   const progress = todaysHabits.length === 0 ? 0 : completedCount / todaysHabits.length;
+  const suggestion = getActiveCoachingSuggestion(habits, reflections, coachingDecisions);
+  const reflectionCandidate = suggestion
+    ? undefined
+    : getReflectionCandidate(habits, reflections, today);
 
   return (
     <SafeAreaView className="bg-background flex-1" edges={['top']}>
@@ -87,6 +103,20 @@ export default function TodayScreen() {
                 : 'Steady beats perfect. Keep going at your pace.'}
           </Typography>
         </View>
+
+        {confirmation ? <CoachingConfirmation message={confirmation} /> : null}
+        {suggestion ? (
+          <CoachingCard
+            suggestion={suggestion}
+            onAccept={() => {
+              const message = acceptSuggestion(suggestion);
+              if (message) setConfirmation(message);
+            }}
+            onReject={() => rejectSuggestion(suggestion.id)}
+          />
+        ) : reflectionCandidate ? (
+          <ReflectionPromptCard habit={reflectionCandidate} />
+        ) : null}
 
         <View className="mb-4 flex-row items-center justify-between">
           <Typography type="h2" className="text-foreground text-xl font-bold">

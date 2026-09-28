@@ -55,7 +55,7 @@ function sampleHabit(
 
 export function createInitialBloomData(): BloomData {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     onboardingCompleted: false,
     goal: null,
     habits: [
@@ -63,5 +63,8 @@ export function createInitialBloomData(): BloomData {
       sampleHabit('habit-walk', 'Walk for 10 minutes', 'walk', '12:30 PM', 2),
       sampleHabit('habit-water', 'Drink 2L of water', 'water', 'Throughout the day', 6),
     ],
+    reflections: [],
+    adjustments: [],
+    coachingDecisions: [],
   };
 }

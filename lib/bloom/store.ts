@@ -1,16 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
+import { describePreviousValue, type CoachingSuggestion } from './coaching';
 import { calculateHabitMetrics, toLocalDateKey, upsertCompletion } from './habitMetrics';
 import { createInitialBloomData } from './sampleData';
 import { HABIT_FREQUENCIES } from './types';
 import type {
   BloomData,
+  CoachingAdjustment,
   Habit,
   HabitFrequency,
   HabitInput,
   HabitScheduleType,
   OnboardingResult,
+  ReflectionInput,
   Weekday,
 } from './types';
 
@@ -28,6 +31,9 @@ interface BloomStore extends BloomData {
   updateHabit: (habitId: string, input: HabitInput) => void;
   setHabitArchived: (habitId: string, archived: boolean) => void;
   deleteHabit: (habitId: string) => void;
+  addReflection: (input: ReflectionInput) => string;
+  acceptCoachingSuggestion: (suggestion: CoachingSuggestion) => string | undefined;
+  rejectCoachingSuggestion: (suggestionId: string) => void;
 }
 
 function persist(data: BloomData) {
@@ -40,15 +46,28 @@ function selectData(state: BloomStore): BloomData {
     onboardingCompleted: state.onboardingCompleted,
     goal: state.goal,
     habits: state.habits,
+    reflections: state.reflections,
+    adjustments: state.adjustments,
+    coachingDecisions: state.coachingDecisions,
   };
 }
 
-function isBloomData(value: unknown): value is BloomData {
+interface StoredBloomData {
+  schemaVersion: number;
+  onboardingCompleted: boolean;
+  goal: BloomData['goal'];
+  habits: Habit[];
+  reflections?: BloomData['reflections'];
+  adjustments?: BloomData['adjustments'];
+  coachingDecisions?: BloomData['coachingDecisions'];
+}
+
+function isStoredBloomData(value: unknown): value is StoredBloomData {
   return (
     typeof value === 'object' &&
     value !== null &&
     'schemaVersion' in value &&
-    value.schemaVersion === 1 &&
+    (value.schemaVersion === 1 || value.schemaVersion === 2) &&
     'onboardingCompleted' in value &&
     typeof value.onboardingCompleted === 'boolean' &&
     'goal' in value &&
@@ -119,6 +138,17 @@ function normalizeHabit(habit: Habit): Habit {
   return withCalculatedStreak(normalized);
 }
 
+function applyCoachingAdjustment(habit: Habit, adjustment: CoachingAdjustment): Habit {
+  const updatedAt = new Date().toISOString();
+  if (adjustment.kind === 'target') {
+    return withCalculatedStreak({ ...habit, target: adjustment.target, updatedAt });
+  }
+  if (adjustment.kind === 'reminder') {
+    return withCalculatedStreak({ ...habit, reminder: adjustment.reminder, updatedAt });
+  }
+  return withCalculatedStreak({ ...habit, frequency: adjustment.frequency, updatedAt });
+}
+
 function frequencyFromInput(input: HabitInput): HabitFrequency {
   return normalizedFrequency({
     id: input.frequencyId,
@@ -140,8 +170,16 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         const data: unknown = JSON.parse(stored);
-        if (isBloomData(data)) {
-          const normalized = { ...data, habits: data.habits.map(normalizeHabit) };
+        if (isStoredBloomData(data)) {
+          const normalized: BloomData = {
+            schemaVersion: 2,
+            onboardingCompleted: data.onboardingCompleted,
+            goal: data.goal,
+            habits: data.habits.map(normalizeHabit),
+            reflections: Array.isArray(data.reflections) ? data.reflections : [],
+            adjustments: Array.isArray(data.adjustments) ? data.adjustments : [],
+            coachingDecisions: Array.isArray(data.coachingDecisions) ? data.coachingDecisions : [],
+          };
           set({ ...normalized, hydrationStatus: 'ready' });
           persist(normalized);
           return;
@@ -266,7 +304,76 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
   },
 
   deleteHabit: (habitId) => {
-    set((state) => ({ habits: state.habits.filter((habit) => habit.id !== habitId) }));
+    set((state) => ({
+      habits: state.habits.filter((habit) => habit.id !== habitId),
+      reflections: state.reflections.filter((reflection) => reflection.habitId !== habitId),
+      adjustments: state.adjustments.filter((adjustment) => adjustment.habitId !== habitId),
+    }));
+    persist(selectData(get()));
+  },
+
+  addReflection: (input) => {
+    const id = nextId('reflection');
+    const reflection = {
+      id,
+      habitId: input.habitId,
+      date: input.date,
+      reason: input.reason,
+      note: input.note?.trim() || undefined,
+      createdAt: new Date().toISOString(),
+    };
+    set((state) => ({
+      reflections: [
+        reflection,
+        ...state.reflections.filter(
+          (candidate) => !(candidate.habitId === input.habitId && candidate.date === input.date),
+        ),
+      ],
+    }));
+    persist(selectData(get()));
+    return id;
+  },
+
+  acceptCoachingSuggestion: (suggestion) => {
+    const habit = get().habits.find((candidate) => candidate.id === suggestion.habitId);
+    if (!habit) return undefined;
+    const now = new Date().toISOString();
+    const previousValue = describePreviousValue(habit, suggestion.adjustment);
+    set((state) => ({
+      habits: state.habits.map((candidate) =>
+        candidate.id === habit.id
+          ? applyCoachingAdjustment(candidate, suggestion.adjustment)
+          : candidate,
+      ),
+      adjustments: [
+        {
+          id: nextId('adjustment'),
+          habitId: habit.id,
+          suggestionId: suggestion.id,
+          date: toLocalDateKey(),
+          adjustment: suggestion.adjustment,
+          previousValue,
+          createdAt: now,
+        },
+        ...state.adjustments,
+      ],
+      coachingDecisions: [
+        { suggestionId: suggestion.id, status: 'accepted', resolvedAt: now },
+        ...state.coachingDecisions.filter((decision) => decision.suggestionId !== suggestion.id),
+      ],
+    }));
+    persist(selectData(get()));
+    return suggestion.confirmation;
+  },
+
+  rejectCoachingSuggestion: (suggestionId) => {
+    const now = new Date().toISOString();
+    set((state) => ({
+      coachingDecisions: [
+        { suggestionId, status: 'rejected', resolvedAt: now },
+        ...state.coachingDecisions.filter((decision) => decision.suggestionId !== suggestionId),
+      ],
+    }));
     persist(selectData(get()));
   },
 }));

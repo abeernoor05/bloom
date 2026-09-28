@@ -1,12 +1,21 @@
 import { useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Archive, Bell, CalendarDays, Pencil, RotateCcw, Trash2 } from 'lucide-react-native';
+import {
+  Archive,
+  Bell,
+  CalendarDays,
+  Lightbulb,
+  Pencil,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react-native';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Button, Card, Dialog, Typography, useThemeColor } from 'heroui-native';
 
 import { HabitScreenHeader } from '@/components/bloom/HabitScreenHeader';
 import { HABIT_ICONS } from '@/components/bloom/habitVisuals';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
+import { buildHabitInsights } from '@/lib/bloom/coaching';
 import {
   calculateHabitMetrics,
   formatFrequency,
@@ -33,6 +42,8 @@ export default function HabitDetailsScreen() {
   const habit = useBloomStore((state) => state.habits.find((candidate) => candidate.id === id));
   const setHabitArchived = useBloomStore((state) => state.setHabitArchived);
   const deleteHabit = useBloomStore((state) => state.deleteHabit);
+  const reflections = useBloomStore((state) => state.reflections);
+  const adjustments = useBloomStore((state) => state.adjustments);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [accent, muted, foreground] = useThemeColor(['accent', 'muted', 'foreground']);
 
@@ -52,6 +63,7 @@ export default function HabitDetailsScreen() {
   const Icon = HABIT_ICONS[habit.icon];
   const metrics = calculateHabitMetrics(habit);
   const recentDates = recentDateKeys(21);
+  const insights = buildHabitInsights(habit, reflections, adjustments);
 
   return (
     <SafeAreaView className="bg-background flex-1">
@@ -165,6 +177,29 @@ export default function HabitDetailsScreen() {
             })}
           </View>
         </Card>
+
+        {insights.length > 0 ? (
+          <Card className="border-border mb-4 rounded-3xl border p-5">
+            <View className="mb-4 flex-row items-center gap-3">
+              <View className="bg-accent-soft size-9 items-center justify-center rounded-2xl">
+                <Lightbulb color={accent} size={18} />
+              </View>
+              <Typography type="h2" className="text-foreground text-lg font-bold">
+                Insights
+              </Typography>
+            </View>
+            <View className="gap-3">
+              {insights.map((insight) => (
+                <View key={insight.id} className="flex-row items-start gap-3">
+                  <View className="bg-accent mt-2 size-1.5 rounded-full" />
+                  <Typography type="body-sm" className="text-muted flex-1">
+                    {insight.text}
+                  </Typography>
+                </View>
+              ))}
+            </View>
+          </Card>
+        ) : null}
 
         <Card className="border-border mb-7 rounded-3xl border p-5">
           <View className="mb-4 flex-row items-center gap-3">

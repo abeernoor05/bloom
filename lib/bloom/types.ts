@@ -77,11 +77,62 @@ export interface Habit {
   archivedAt?: string;
 }
 
+export const REFLECTION_REASONS = [
+  { id: 'forgot', label: 'I forgot' },
+  { id: 'not-enough-time', label: "I didn't have enough time" },
+  { id: 'too-difficult', label: 'The habit felt too difficult' },
+  { id: 'schedule-changed', label: 'My schedule changed' },
+  { id: 'not-motivated', label: "I wasn't motivated" },
+  { id: 'something-else', label: 'Something else' },
+] as const;
+
+export type ReflectionReason = (typeof REFLECTION_REASONS)[number]['id'];
+
+export interface HabitReflection {
+  id: string;
+  habitId: string;
+  date: string;
+  reason: ReflectionReason;
+  note?: string;
+  createdAt: string;
+}
+
+export type CoachingAdjustment =
+  | { kind: 'target'; target: HabitTarget }
+  | { kind: 'reminder'; reminder: HabitReminder }
+  | { kind: 'frequency'; frequency: HabitFrequency };
+
+export interface HabitAdjustmentRecord {
+  id: string;
+  habitId: string;
+  suggestionId: string;
+  date: string;
+  adjustment: CoachingAdjustment;
+  previousValue: string;
+  createdAt: string;
+}
+
+export interface CoachingDecision {
+  suggestionId: string;
+  status: 'accepted' | 'rejected';
+  resolvedAt: string;
+}
+
 export interface BloomData {
-  schemaVersion: 1;
+  schemaVersion: 2;
   onboardingCompleted: boolean;
   goal: Goal | null;
   habits: Habit[];
+  reflections: HabitReflection[];
+  adjustments: HabitAdjustmentRecord[];
+  coachingDecisions: CoachingDecision[];
+}
+
+export interface ReflectionInput {
+  habitId: string;
+  date: string;
+  reason: ReflectionReason;
+  note?: string;
 }
 
 export interface OnboardingResult {

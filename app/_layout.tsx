@@ -81,6 +81,7 @@ function AppNavigator() {
       <Stack.Screen name="habits/new" />
       <Stack.Screen name="habits/[id]" />
       <Stack.Screen name="habits/[id]/edit" />
+      <Stack.Screen name="reflection/[habitId]" />
     </Stack>
   );
 }
