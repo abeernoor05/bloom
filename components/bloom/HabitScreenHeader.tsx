@@ -2,6 +2,8 @@ import { ArrowLeft } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
 import { Typography, useThemeColor } from 'heroui-native';
 
+import { BotanicalAccent } from '@/components/bloom/BotanicalAccent';
+
 interface HabitScreenHeaderProps {
   title: string;
   onBack: () => void;
@@ -11,7 +13,8 @@ interface HabitScreenHeaderProps {
 export function HabitScreenHeader({ title, onBack, action }: HabitScreenHeaderProps) {
   const [accent] = useThemeColor(['accent']);
   return (
-    <View className="mb-7 flex-row items-center gap-3">
+    <View className="relative mb-7 flex-row items-center gap-3">
+      <BotanicalAccent size="sm" className="absolute right-0 -bottom-5 opacity-35" />
       <Pressable
         onPress={onBack}
         accessibilityRole="button"

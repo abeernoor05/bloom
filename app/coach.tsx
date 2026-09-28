@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Button, Card, Label, Spinner, TextArea, TextField, Typography } from 'heroui-native';
 
 import { BloomHeading } from '@/components/bloom/BloomHeading';
+import { BotanicalAccent } from '@/components/bloom/BotanicalAccent';
 import { CoachExchangeCard } from '@/components/bloom/CoachExchangeCard';
 import { HabitScreenHeader } from '@/components/bloom/HabitScreenHeader';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
@@ -59,6 +60,7 @@ export default function CoachScreen() {
             <BloomHeading level="hero" className="text-center">
               Your Bloom coach
             </BloomHeading>
+            <BotanicalAccent size="sm" className="mt-1" />
             <Typography type="body-sm" className="text-muted mt-2 text-center">
               Ask for a small, realistic next step.
             </Typography>

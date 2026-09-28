@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import { Button, Input, Label, TextField, Typography, useThemeColor } from 'heroui-native';
 
 import { BloomHeading } from '@/components/bloom/BloomHeading';
+import { BotanicalAccent } from '@/components/bloom/BotanicalAccent';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 import { useBloomStore } from '@/lib/bloom/store';
 import {
@@ -122,6 +123,7 @@ export default function OnboardingScreen() {
                   <Sparkles color={accent} size={22} />
                 </View>
                 <BloomHeading level="hero">{STEP_TITLES[step]}</BloomHeading>
+                <BotanicalAccent size="sm" />
                 <Typography type="body" className="text-muted max-w-md text-base leading-6">
                   {step === 0 && 'Choose the area where a small, steady change would matter most.'}
                   {step === 1 && 'Keep it personal and specific. You can shape the habits later.'}
@@ -154,7 +156,7 @@ export default function OnboardingScreen() {
                         </Typography>
                         {isSelected ? (
                           <View className="bg-accent size-6 items-center justify-center rounded-full">
-                            <Check color="#FFFFFF" size={15} strokeWidth={3} />
+                            <Check color="#FFF9EE" size={15} strokeWidth={3} />
                           </View>
                         ) : (
                           <ChevronRight color={muted} size={18} />
@@ -223,7 +225,7 @@ export default function OnboardingScreen() {
                             isSelected ? 'border-accent bg-accent' : 'border-border',
                           )}
                         >
-                          {isSelected && <Check color="#FFFFFF" size={14} strokeWidth={3} />}
+                          {isSelected && <Check color="#FFF9EE" size={14} strokeWidth={3} />}
                         </View>
                       </Pressable>
                     );

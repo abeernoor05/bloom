@@ -6,6 +6,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 
 import { BloomHeading } from '@/components/bloom/BloomHeading';
+import { BotanicalAccent } from '@/components/bloom/BotanicalAccent';
 import { HabitIcon } from '@/components/bloom/habitVisuals';
 import { formatFrequency } from '@/lib/bloom/habitMetrics';
 import { useBloomStore } from '@/lib/bloom/store';
@@ -14,7 +15,7 @@ export default function HabitsScreen() {
   const habits = useBloomStore((state) => state.habits);
   const setHabitArchived = useBloomStore((state) => state.setHabitArchived);
   const [showArchived, setShowArchived] = useState(false);
-  const [accent, muted] = useThemeColor(['accent', 'muted']);
+  const [accent, muted, accentForeground] = useThemeColor(['accent', 'muted', 'accent-foreground']);
   const activeHabits = useMemo(() => habits.filter((habit) => !habit.archivedAt), [habits]);
   const archivedHabits = useMemo(
     () => habits.filter((habit) => Boolean(habit.archivedAt)),
@@ -30,13 +31,14 @@ export default function HabitsScreen() {
               Your growing collection
             </Typography>
             <BloomHeading level="hero">My habits</BloomHeading>
+            <BotanicalAccent size="sm" className="mt-1" />
           </View>
           <Button
             isIconOnly
             accessibilityLabel="Add habit"
             onPress={() => router.push('/habits/new')}
           >
-            <Plus size={20} />
+            <Plus color={accentForeground} size={20} />
           </Button>
         </View>
 

@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Button, Input, Label, TextField, Typography } from 'heroui-native';
 
 import { BloomHeading } from '@/components/bloom/BloomHeading';
+import { BotanicalAccent } from '@/components/bloom/BotanicalAccent';
 import { HabitScreenHeader } from '@/components/bloom/HabitScreenHeader';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 import { toLocalDateKey } from '@/lib/bloom/habitMetrics';
@@ -59,6 +60,7 @@ export default function ReflectionScreen() {
             <BloomHeading level="hero" className="text-center">
               What got in the way?
             </BloomHeading>
+            <BotanicalAccent size="sm" className="mt-1" />
             <Typography type="body" className="text-muted mt-2 text-center">
               Choose what best fits {habit.name.toLowerCase()} this time.
             </Typography>

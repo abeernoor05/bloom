@@ -8,7 +8,7 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: 'Not found' }} />
       <SafeAreaView className="bg-background flex-1 items-center justify-center px-6">
-        <Typography type="h1" className="text-foreground text-center text-3xl font-bold">
+        <Typography type="h1" className="text-foreground text-center text-2xl font-bold">
           Page not found
         </Typography>
         <Typography type="body" className="text-muted mt-2 mb-6 text-center">

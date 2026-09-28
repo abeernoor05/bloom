@@ -23,7 +23,7 @@ export default function WelcomeScreen() {
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width - 48, 440);
   const imageHeight = Math.round((contentWidth / 345) * 268);
-  const titleSize = width < 370 ? 35 : 40;
+  const titleSize = width < 370 ? 31 : 35;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>

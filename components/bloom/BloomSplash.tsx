@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   wordmark: {
     color: COLORS.cream,
     fontFamily: 'Lora_400Regular',
-    fontSize: 54,
-    lineHeight: 66,
+    fontSize: 48,
+    lineHeight: 58,
   },
 });

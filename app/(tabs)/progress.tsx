@@ -6,6 +6,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 
 import { BloomHeading } from '@/components/bloom/BloomHeading';
+import { BotanicalAccent } from '@/components/bloom/BotanicalAccent';
 import { calculateHabitMetrics } from '@/lib/bloom/habitMetrics';
 import { calculateOverallProgress } from '@/lib/bloom/progressMetrics';
 import { useBloomStore } from '@/lib/bloom/store';
@@ -32,6 +33,7 @@ export default function ProgressScreen() {
           Meaningful, not perfect
         </Typography>
         <BloomHeading level="hero">Your progress</BloomHeading>
+        <BotanicalAccent size="sm" className="mt-1" />
 
         {activeHabits.length === 0 ? (
           <Card className="border-border bg-surface mt-7 rounded-[22px] border p-6">
@@ -42,7 +44,8 @@ export default function ProgressScreen() {
           </Card>
         ) : (
           <>
-            <Card className="bg-accent mt-7 rounded-[26px] border-0 p-6">
+            <Card className="bg-accent relative mt-7 overflow-hidden rounded-[26px] border-0 p-6">
+              <BotanicalAccent onDark className="absolute -top-1 -right-1 opacity-20" />
               <View className="mb-5 flex-row items-center gap-3">
                 <View className="bg-accent-foreground/15 size-10 items-center justify-center rounded-full">
                   <Sprout color="#FFF9EE" size={19} />

@@ -5,6 +5,7 @@ import { Bell, Clock3, Info, ShieldCheck } from 'lucide-react-native';
 import { Button, Card, Input, TextField, Typography, useThemeColor } from 'heroui-native';
 
 import { BloomHeading } from '@/components/bloom/BloomHeading';
+import { BotanicalAccent } from '@/components/bloom/BotanicalAccent';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 import {
   getNotificationAvailability,
@@ -85,6 +86,7 @@ export default function SettingsScreen() {
             Make Bloom yours
           </Typography>
           <BloomHeading level="hero">Settings</BloomHeading>
+          <BotanicalAccent size="sm" className="mt-1" />
 
           <View className="gap-3">
             <BloomHeading level="section">Notifications</BloomHeading>

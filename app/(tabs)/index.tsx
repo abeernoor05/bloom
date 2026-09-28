@@ -6,6 +6,7 @@ import { RefreshControl, ScrollView, View, Pressable } from 'react-native';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 
 import { BloomHeading } from '@/components/bloom/BloomHeading';
+import { BotanicalAccent } from '@/components/bloom/BotanicalAccent';
 import {
   CoachingCard,
   CoachingConfirmation,
@@ -83,6 +84,7 @@ export default function TodayScreen() {
               {getGreeting()}
             </Typography>
             <BloomHeading level="hero">Your day, gently</BloomHeading>
+            <BotanicalAccent size="sm" className="mt-1" />
           </View>
           <View className="flex-row items-center gap-2">
             <Pressable
@@ -101,7 +103,8 @@ export default function TodayScreen() {
           </View>
         </View>
 
-        <Card className="bg-accent mb-7 overflow-hidden rounded-[26px] border-0 p-5">
+        <Card className="bg-accent relative mb-7 overflow-hidden rounded-[26px] border-0 p-5">
+          <BotanicalAccent onDark className="absolute -top-1 -right-1 opacity-20" />
           <View className="flex-row items-end justify-between gap-4">
             <View className="min-w-0 flex-1">
               <Typography type="body-xs" className="text-accent-foreground/70 mb-2 font-medium">
