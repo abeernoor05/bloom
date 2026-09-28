@@ -10,10 +10,10 @@ interface BloomHeadingProps {
   numberOfLines?: number;
 }
 
-const LEVEL_CLASSES = {
-  hero: 'text-[23px] leading-[29px]',
-  title: 'text-xl leading-[26px]',
-  section: 'text-base leading-[22px]',
+const LEVEL_STYLES = {
+  hero: { fontSize: 20, lineHeight: 25 },
+  title: { fontSize: 18, lineHeight: 23 },
+  section: { fontSize: 15, lineHeight: 20 },
 } as const;
 
 export function BloomHeading({
@@ -25,9 +25,9 @@ export function BloomHeading({
   return (
     <Typography
       type="h1"
-      className={cn('text-foreground font-normal', LEVEL_CLASSES[level], className)}
+      className={cn('text-foreground font-normal', className)}
       numberOfLines={numberOfLines}
-      style={{ fontFamily: 'Lora_400Regular' }}
+      style={{ fontFamily: 'Lora_400Regular', ...LEVEL_STYLES[level] }}
     >
       {children}
     </Typography>
