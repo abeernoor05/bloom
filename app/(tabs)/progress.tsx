@@ -101,7 +101,7 @@ export default function ProgressScreen() {
                 </Typography>
                 <Typography
                   type="body-xs"
-                  className="text-sage mb-1 max-w-[152px] flex-1 text-right leading-4"
+                  className="text-accent-foreground mb-1 max-w-[152px] flex-1 text-right leading-4"
                 >
                   of planned moments, {comparison}
                 </Typography>
@@ -117,17 +117,17 @@ export default function ProgressScreen() {
                       accessible
                       accessibilityLabel={`${week.label}: ${percent(week.rate)}% complete`}
                     >
-                      <View className="bg-accent-soft/15 h-24 w-[18px] justify-end overflow-hidden rounded-full">
+                      <View className="bg-accent-foreground/20 h-24 w-[18px] justify-end overflow-hidden rounded-full">
                         <View
                           className={
                             index === weeks.length - 1
-                              ? 'bg-gold w-full rounded-full'
-                              : 'bg-sage w-full rounded-full'
+                              ? 'bg-accent-foreground w-full rounded-full'
+                              : 'bg-accent-foreground/70 w-full rounded-full'
                           }
                           style={{ height: Math.round((fillHeight / 100) * 96) }}
                         />
                       </View>
-                      <Typography type="body-xs" className="text-sage mt-2">
+                      <Typography type="body-xs" className="text-accent-foreground mt-2">
                         {week.label}
                       </Typography>
                     </View>
