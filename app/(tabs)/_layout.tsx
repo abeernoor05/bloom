@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react-native';
+import { ChartNoAxesColumnIncreasing, House, Settings, Sprout } from 'lucide-react-native';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useThemeColor } from 'heroui-native';
@@ -6,9 +6,8 @@ import { useUniwind } from 'uniwind';
 
 export default function TabLayout() {
   const { theme } = useUniwind();
-  const [background, foreground, border, accent, muted] = useThemeColor([
+  const [background, border, accent, muted] = useThemeColor([
     'background',
-    'foreground',
     'border',
     'accent',
     'muted',
@@ -18,16 +17,21 @@ export default function TabLayout() {
     <>
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <Tabs
+        initialRouteName="index"
         screenOptions={{
-          headerStyle: { backgroundColor: background },
-          headerTintColor: foreground,
-          headerTitleStyle: { color: foreground },
-          headerShadowVisible: false,
+          headerShown: false,
           sceneStyle: { backgroundColor: background },
           tabBarStyle: {
             backgroundColor: background,
             borderTopColor: border,
+            borderTopWidth: 1,
+            height: 68,
+            paddingTop: 8,
+            paddingBottom: 8,
+            shadowColor: 'transparent',
+            elevation: 0,
           },
+          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
           tabBarActiveTintColor: accent,
           tabBarInactiveTintColor: muted,
         }}
@@ -35,8 +39,31 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
-            tabBarIcon: ({ color, size }) => <Home color={color} size={size ?? 24} />,
+            title: 'Today',
+            tabBarIcon: ({ color, size }) => <House color={color} size={size ?? 23} />,
+          }}
+        />
+        <Tabs.Screen
+          name="habits"
+          options={{
+            title: 'Habits',
+            tabBarIcon: ({ color, size }) => <Sprout color={color} size={size ?? 23} />,
+          }}
+        />
+        <Tabs.Screen
+          name="progress"
+          options={{
+            title: 'Progress',
+            tabBarIcon: ({ color, size }) => (
+              <ChartNoAxesColumnIncreasing color={color} size={size ?? 23} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: 'Settings',
+            tabBarIcon: ({ color, size }) => <Settings color={color} size={size ?? 23} />,
           }}
         />
       </Tabs>

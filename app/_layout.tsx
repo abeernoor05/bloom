@@ -20,12 +20,15 @@ import {
   type ErrorBoundaryProps,
   SplashScreen,
   Stack,
+  router,
+  useSegments,
 } from 'expo-router';
 
 import { initPostHog } from '@/lib/posthog';
 import { registerServiceWorker } from '@/lib/registerServiceWorker';
 import { reportErrorToParent } from '@/lib/reportPreviewError';
 import { InstallPrompt } from '@/components/InstallPrompt';
+import { useBloomStore } from '@/lib/bloom/store';
 
 /**
  * Custom ErrorBoundary that reports React render errors to the parent window (Bilt preview iframe)
@@ -47,6 +50,37 @@ export { ErrorBoundary };
 Uniwind.setTheme('light');
 
 void SplashScreen.preventAutoHideAsync();
+
+function AppNavigator() {
+  const segments = useSegments();
+  const hydrationStatus = useBloomStore((state) => state.hydrationStatus);
+  const onboardingCompleted = useBloomStore((state) => state.onboardingCompleted);
+  const hydrate = useBloomStore((state) => state.hydrate);
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
+
+  useEffect(() => {
+    if (hydrationStatus !== 'ready') return;
+    const isOnboarding = segments[0] === 'onboarding';
+
+    if (!onboardingCompleted && !isOnboarding) {
+      router.replace('/onboarding');
+    } else if (onboardingCompleted && isOnboarding) {
+      router.replace('/(tabs)');
+    }
+  }, [hydrationStatus, onboardingCompleted, segments]);
+
+  if (hydrationStatus !== 'ready') return null;
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -141,9 +175,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <HeroUINativeProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ title: 'Habits', headerShown: false }} />
-        </Stack>
+        <AppNavigator />
         <InstallPrompt />
       </HeroUINativeProvider>
     </GestureHandlerRootView>
