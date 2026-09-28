@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { Button, Card, Typography, useThemeColor } from 'heroui-native';
 import { MessageCircle, Plus } from 'lucide-react-native';
@@ -17,12 +17,25 @@ import { getActiveCoachingSuggestion, getReflectionCandidate } from '@/lib/bloom
 import { isHabitCompleteOnDate, isHabitScheduledOnDate } from '@/lib/bloom/habitMetrics';
 import { toLocalDateKey } from '@/lib/bloom/sampleData';
 import { useBloomStore } from '@/lib/bloom/store';
+import { cn } from '@/lib/utils';
 
 const getGreeting = () => {
   const hour = new Date().getHours();
   if (hour < 12) return 'Good morning';
   if (hour < 18) return 'Good afternoon';
   return 'Good evening';
+};
+
+const getWeekDays = (currentDate: Date) => {
+  const start = new Date(currentDate);
+  const dayOffset = (currentDate.getDay() + 6) % 7;
+  start.setDate(currentDate.getDate() - dayOffset);
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    return date;
+  });
 };
 
 export default function TodayScreen() {
@@ -35,22 +48,24 @@ export default function TodayScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [confirmation, setConfirmation] = useState<string | null>(null);
   const muted = useThemeColor('muted');
-  const today = toLocalDateKey();
+  const currentDate = new Date();
+  const today = toLocalDateKey(currentDate);
+  const weekDays = getWeekDays(currentDate);
+  const dateLabel = new Intl.DateTimeFormat(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }).format(currentDate);
 
-  const activeHabits = useMemo(() => habitsData.filter((habit) => !habit.archivedAt), [habitsData]);
-  const habits = useMemo(
-    () => activeHabits.filter((habit) => isHabitScheduledOnDate(habit, today)),
-    [activeHabits, today],
-  );
+  const activeHabits = habitsData.filter((habit) => !habit.archivedAt);
+  const habits = activeHabits.filter((habit) => isHabitScheduledOnDate(habit, today));
   const completeCount = habits.filter((habit) => isHabitCompleteOnDate(habit, today)).length;
   const progress = habits.length === 0 ? 0 : completeCount / habits.length;
-  const reflectionHabit = useMemo(
-    () => getReflectionCandidate(activeHabits, reflections, today),
-    [activeHabits, reflections, today],
-  );
-  const coachingSuggestion = useMemo(
-    () => getActiveCoachingSuggestion(activeHabits, reflections, coachingDecisions),
-    [activeHabits, coachingDecisions, reflections],
+  const reflectionHabit = getReflectionCandidate(activeHabits, reflections, today);
+  const coachingSuggestion = getActiveCoachingSuggestion(
+    activeHabits,
+    reflections,
+    coachingDecisions,
   );
 
   const refresh = () => {
@@ -78,12 +93,16 @@ export default function TodayScreen() {
           <RefreshControl refreshing={isRefreshing} onRefresh={refresh} tintColor="#254D3C" />
         }
       >
-        <View className="mb-8 flex-row items-start justify-between gap-4">
+        <View className="mb-6 flex-row items-start justify-between gap-4">
           <View className="min-w-0 flex-1">
-            <Typography type="body-sm" className="text-muted mb-1">
-              {getGreeting()}
+            <Typography
+              type="body-xs"
+              className="text-accent mb-1 font-medium"
+              style={{ textTransform: 'uppercase' }}
+            >
+              {dateLabel}
             </Typography>
-            <BloomHeading level="hero">Your day, gently</BloomHeading>
+            <BloomHeading level="hero">{getGreeting()}.</BloomHeading>
             <BotanicalAccent size="sm" className="mt-1" />
           </View>
           <View className="flex-row items-center gap-2">
@@ -91,25 +110,64 @@ export default function TodayScreen() {
               onPress={() => router.push('/coach')}
               accessibilityRole="button"
               accessibilityLabel="Ask your coach"
-              className="border-border bg-surface size-11 items-center justify-center rounded-full border"
+              className="border-sage bg-background-tertiary size-11 items-center justify-center rounded-full border"
             >
               <MessageCircle color={muted} size={20} />
             </Pressable>
-            <View className="bg-background-tertiary size-12 items-center justify-center rounded-full">
-              <Typography type="h4" className="text-accent">
+            <View className="bg-terracotta size-12 items-center justify-center rounded-full">
+              <Typography type="h4" className="text-accent-foreground">
                 {completeCount}
               </Typography>
             </View>
           </View>
         </View>
 
-        <Card className="bg-accent relative mb-7 overflow-hidden rounded-[26px] border-0 p-5">
+        <View className="bg-background-secondary mb-6 flex-row justify-between rounded-[22px] px-3 py-4">
+          {weekDays.map((date) => {
+            const dateKey = toLocalDateKey(date);
+            const isToday = dateKey === today;
+            const hasCompletion = activeHabits.some((habit) =>
+              isHabitCompleteOnDate(habit, dateKey),
+            );
+
+            return (
+              <View key={dateKey} className="items-center gap-2">
+                <Typography type="body-xs" className={isToday ? 'text-accent' : 'text-muted'}>
+                  {new Intl.DateTimeFormat(undefined, { weekday: 'narrow' }).format(date)}
+                </Typography>
+                <View
+                  className={cn(
+                    'size-9 items-center justify-center rounded-full',
+                    isToday ? 'bg-accent' : 'bg-background',
+                  )}
+                >
+                  <Typography
+                    type="body-sm"
+                    className={isToday ? 'text-accent-foreground' : 'text-foreground'}
+                  >
+                    {date.getDate()}
+                  </Typography>
+                </View>
+                <View
+                  className={cn(
+                    'size-1.5 rounded-full',
+                    hasCompletion ? 'bg-terracotta' : 'bg-transparent',
+                  )}
+                />
+              </View>
+            );
+          })}
+        </View>
+
+        <Card className="bg-accent relative mb-7 overflow-hidden rounded-[26px] rounded-tr-[54px] border-0 p-5">
           <BotanicalAccent onDark className="absolute -top-1 -right-1 opacity-20" />
           <View className="flex-row items-end justify-between gap-4">
             <View className="min-w-0 flex-1">
-              <Typography type="body-xs" className="text-accent-foreground/70 mb-2 font-medium">
-                TODAY&apos;S RHYTHM
-              </Typography>
+              <View className="bg-background-tertiary mb-3 self-start rounded-full px-3 py-1.5">
+                <Typography type="body-xs" className="text-accent font-medium">
+                  Today&apos;s rhythm
+                </Typography>
+              </View>
               <Typography type="h3" className="text-accent-foreground">
                 {completeCount} of {habits.length} complete
               </Typography>
@@ -123,7 +181,7 @@ export default function TodayScreen() {
           </View>
           <View className="bg-accent-foreground/20 mt-5 h-2 overflow-hidden rounded-full">
             <View
-              className="bg-accent-foreground h-full rounded-full"
+              className="bg-terracotta h-full rounded-full"
               style={{ width: `${Math.round(progress * 100)}%` }}
             />
           </View>
