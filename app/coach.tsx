@@ -1,0 +1,124 @@
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { Button, Card, Label, Spinner, TextArea, TextField, Typography } from 'heroui-native';
+
+import { CoachExchangeCard } from '@/components/bloom/CoachExchangeCard';
+import { HabitScreenHeader } from '@/components/bloom/HabitScreenHeader';
+import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
+import { requestCoach } from '@/lib/bloom/aiCoach';
+import { useBloomStore } from '@/lib/bloom/store';
+import { goBackOrReplace } from '@/lib/navigation';
+
+function closeCoach() {
+  goBackOrReplace('/');
+}
+
+export default function CoachScreen() {
+  const coachExchanges = useBloomStore((state) => state.coachExchanges);
+  const recordCoachExchange = useBloomStore((state) => state.recordCoachExchange);
+  const acceptRecommendation = useBloomStore((state) => state.acceptCoachRecommendation);
+  const rejectRecommendation = useBloomStore((state) => state.rejectCoachRecommendation);
+  const [question, setQuestion] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [feedback, setFeedback] = useState<string>();
+
+  const submitQuestion = async () => {
+    const trimmed = question.trim();
+    if (!trimmed || isSending) return;
+    setIsSending(true);
+    setFeedback(undefined);
+    try {
+      const result = await requestCoach(trimmed, useBloomStore.getState());
+      recordCoachExchange(trimmed, result);
+      setQuestion('');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  return (
+    <SafeAreaView className="bg-background flex-1">
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerClassName="mx-auto w-full max-w-2xl flex-grow px-5 pb-12 pt-4"
+        >
+          <HabitScreenHeader title="Coach" onBack={closeCoach} />
+
+          <Card className="border-border mb-5 rounded-3xl border p-5">
+            <Typography type="h2" className="text-foreground text-xl font-bold">
+              Ask about your habits
+            </Typography>
+            <TextField className="mt-5" isDisabled={isSending}>
+              <Label>What would you like help with?</Label>
+              <TextArea
+                value={question}
+                onChangeText={setQuestion}
+                placeholder="How can I make my routine easier to keep?"
+                maxLength={500}
+                className="min-h-28"
+              />
+            </TextField>
+            <Typography type="body-xs" className="text-muted mt-3">
+              Bloom sends your question and a short habit summary for this reply. Reflection notes
+              stay on this device.
+            </Typography>
+            <Button
+              className="mt-5"
+              size="lg"
+              isDisabled={isSending || question.trim().length === 0}
+              onPress={() => void submitQuestion()}
+              accessibilityLabel={isSending ? 'Getting coaching response' : 'Ask your coach'}
+            >
+              {isSending ? <Spinner size="sm" color="currentColor" /> : null}
+              <Button.Label>{isSending ? 'Thinking…' : 'Ask coach'}</Button.Label>
+            </Button>
+          </Card>
+
+          {feedback ? (
+            <Card
+              className="border-accent/25 mb-5 rounded-2xl border px-4 py-3"
+              accessibilityLiveRegion="polite"
+            >
+              <Typography type="body-sm" className="text-foreground font-medium">
+                {feedback}
+              </Typography>
+            </Card>
+          ) : null}
+
+          <Typography type="h2" className="text-foreground mb-4 text-xl font-bold">
+            Recent conversations
+          </Typography>
+          {coachExchanges.length === 0 ? (
+            <Card className="border-border rounded-3xl border p-5">
+              <Typography type="body-sm" className="text-muted">
+                Your coaching replies will appear here.
+              </Typography>
+            </Card>
+          ) : (
+            <View className="gap-4">
+              {coachExchanges.slice(0, 10).map((exchange) => (
+                <CoachExchangeCard
+                  key={exchange.id}
+                  exchange={exchange}
+                  onAccept={(exchangeId) => {
+                    const message = acceptRecommendation(exchangeId);
+                    if (message) setFeedback(message);
+                  }}
+                  onReject={(exchangeId) => {
+                    rejectRecommendation(exchangeId);
+                    setFeedback('Suggestion declined. Your habit was not changed.');
+                  }}
+                />
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}

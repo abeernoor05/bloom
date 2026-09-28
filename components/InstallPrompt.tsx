@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSegments } from 'expo-router';
 import { Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -51,12 +52,13 @@ function isIosSafari(): boolean {
   return isIos && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
 }
 
-const TAB_BAR_HEIGHT = 49;
+const TAB_BAR_HEIGHT = 68;
 
 export function InstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
   const insets = useSafeAreaInsets();
+  const segments = useSegments();
   const bottom = insets.bottom + TAB_BAR_HEIGHT + 12;
 
   useEffect(() => {
@@ -108,7 +110,7 @@ export function InstallPrompt() {
     AsyncStorage.setItem(IOS_HINT_DISMISSED_KEY, 'true').catch(() => {});
   }, []);
 
-  if (Platform.OS !== 'web') return null;
+  if (Platform.OS !== 'web' || segments[0] !== '(tabs)') return null;
 
   if (installEvent) {
     return (
@@ -126,7 +128,7 @@ export function InstallPrompt() {
         </View>
         <Pressable
           accessibilityRole="button"
-          className="rounded-md px-3 py-2"
+          className="min-h-11 min-w-11 items-center justify-center rounded-md px-3 py-2"
           onPress={() => setInstallEvent(null)}
         >
           <Text.Paragraph type="body-sm" weight="semibold" color="muted">
@@ -135,7 +137,7 @@ export function InstallPrompt() {
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          className="bg-primary rounded-md px-3 py-2"
+          className="bg-primary min-h-11 min-w-11 items-center justify-center rounded-md px-3 py-2"
           onPress={handleInstall}
         >
           <Text.Paragraph type="body-sm" weight="semibold" className="text-primary-foreground">
@@ -162,7 +164,7 @@ export function InstallPrompt() {
         </View>
         <Pressable
           accessibilityRole="button"
-          className="rounded-md px-3 py-2"
+          className="min-h-11 min-w-11 items-center justify-center rounded-md px-3 py-2"
           onPress={dismissIosHint}
         >
           <Text.Paragraph type="body-sm" weight="semibold" color="muted">

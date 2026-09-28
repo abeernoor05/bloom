@@ -2,8 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import { describePreviousValue, type CoachingSuggestion } from './coaching';
-import { calculateHabitMetrics, toLocalDateKey, upsertCompletion } from './habitMetrics';
-import { reconcileHabitNotifications } from './notifications';
+import { normalizeCoachExchanges, type CoachResult } from './aiCoach';
+import {
+  calculateHabitMetrics,
+  isHabitScheduledOnDate,
+  toLocalDateKey,
+  upsertCompletion,
+} from './habitMetrics';
 import { normalizeReminderTime } from './reminderTime';
 import { createInitialBloomData } from './sampleData';
 import { HABIT_FREQUENCIES } from './types';
@@ -25,6 +30,7 @@ type HydrationStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 interface BloomStore extends BloomData {
   hydrationStatus: HydrationStatus;
+  storageError: boolean;
   hydrate: () => Promise<void>;
   finishOnboarding: (result: OnboardingResult) => void;
   setHabitCompletion: (habitId: string, date: string, completed: boolean) => void;
@@ -36,16 +42,17 @@ interface BloomStore extends BloomData {
   addReflection: (input: ReflectionInput) => string;
   acceptCoachingSuggestion: (suggestion: CoachingSuggestion) => string | undefined;
   rejectCoachingSuggestion: (suggestionId: string) => void;
+  recordCoachExchange: (question: string, result: CoachResult) => string;
+  acceptCoachRecommendation: (exchangeId: string) => string | undefined;
+  rejectCoachRecommendation: (exchangeId: string) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setDefaultReminderTime: (time: string) => void;
 }
 
 function persist(data: BloomData) {
-  void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function syncNotifications(data: BloomData) {
-  void reconcileHabitNotifications(data.habits, data.notificationPreference);
+  void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)).catch(() => {
+    useBloomStore.setState({ storageError: true });
+  });
 }
 
 function selectData(state: BloomStore): BloomData {
@@ -57,6 +64,7 @@ function selectData(state: BloomStore): BloomData {
     reflections: state.reflections,
     adjustments: state.adjustments,
     coachingDecisions: state.coachingDecisions,
+    coachExchanges: state.coachExchanges,
     notificationPreference: state.notificationPreference,
   };
 }
@@ -69,6 +77,7 @@ interface StoredBloomData {
   reflections?: BloomData['reflections'];
   adjustments?: BloomData['adjustments'];
   coachingDecisions?: BloomData['coachingDecisions'];
+  coachExchanges?: unknown;
   notificationPreference?: BloomData['notificationPreference'];
 }
 
@@ -77,7 +86,10 @@ function isStoredBloomData(value: unknown): value is StoredBloomData {
     typeof value === 'object' &&
     value !== null &&
     'schemaVersion' in value &&
-    (value.schemaVersion === 1 || value.schemaVersion === 2 || value.schemaVersion === 3) &&
+    (value.schemaVersion === 1 ||
+      value.schemaVersion === 2 ||
+      value.schemaVersion === 3 ||
+      value.schemaVersion === 4) &&
     'onboardingCompleted' in value &&
     typeof value.onboardingCompleted === 'boolean' &&
     'goal' in value &&
@@ -148,6 +160,46 @@ function normalizeHabit(habit: Habit): Habit {
   return withCalculatedStreak(normalized);
 }
 
+function safeAdjustmentForHabit(
+  habit: Habit,
+  adjustment: CoachingAdjustment,
+): CoachingAdjustment | undefined {
+  if (adjustment.kind === 'target') {
+    if (
+      !habit.target ||
+      adjustment.target.value < 1 ||
+      adjustment.target.value >= habit.target.value ||
+      adjustment.target.unit.toLowerCase() !== habit.target.unit.toLowerCase()
+    ) {
+      return undefined;
+    }
+    return {
+      kind: 'target',
+      target: { value: adjustment.target.value, unit: habit.target.unit },
+    };
+  }
+
+  if (adjustment.kind === 'reminder') {
+    const time = normalizeReminderTime(adjustment.reminder.time);
+    if (!time) return undefined;
+    return {
+      kind: 'reminder',
+      reminder: { ...habit.reminder, enabled: true, time },
+    };
+  }
+
+  if (
+    adjustment.frequency.daysPerWeek < 1 ||
+    adjustment.frequency.daysPerWeek >= habit.frequency.daysPerWeek
+  ) {
+    return undefined;
+  }
+  return {
+    kind: 'frequency',
+    frequency: normalizedFrequency(adjustment.frequency),
+  };
+}
+
 function applyCoachingAdjustment(habit: Habit, adjustment: CoachingAdjustment): Habit {
   const updatedAt = new Date().toISOString();
   if (adjustment.kind === 'target') {
@@ -171,6 +223,7 @@ function frequencyFromInput(input: HabitInput): HabitFrequency {
 export const useBloomStore = create<BloomStore>((set, get) => ({
   ...createInitialBloomData(),
   hydrationStatus: 'idle',
+  storageError: false,
 
   hydrate: async () => {
     if (get().hydrationStatus !== 'idle') return;
@@ -182,13 +235,14 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
         const data: unknown = JSON.parse(stored);
         if (isStoredBloomData(data)) {
           const normalized: BloomData = {
-            schemaVersion: 3,
+            schemaVersion: 4,
             onboardingCompleted: data.onboardingCompleted,
             goal: data.goal,
             habits: data.habits.map(normalizeHabit),
             reflections: Array.isArray(data.reflections) ? data.reflections : [],
             adjustments: Array.isArray(data.adjustments) ? data.adjustments : [],
             coachingDecisions: Array.isArray(data.coachingDecisions) ? data.coachingDecisions : [],
+            coachExchanges: normalizeCoachExchanges(data.coachExchanges),
             notificationPreference: {
               enabled: data.notificationPreference?.enabled ?? true,
               defaultReminderTime:
@@ -201,8 +255,8 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
           return;
         }
       }
-    } catch (error) {
-      console.error('Could not load Bloom data', error);
+    } catch {
+      set({ storageError: true });
     }
 
     set({ habits: get().habits.map(normalizeHabit), hydrationStatus: 'ready' });
@@ -238,6 +292,9 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
   },
 
   setHabitCompletion: (habitId, date, completed) => {
+    const selectedHabit = get().habits.find((habit) => habit.id === habitId);
+    if (!selectedHabit || (completed && !isHabitScheduledOnDate(selectedHabit, date))) return;
+
     set((state) => ({
       habits: state.habits.map((habit) => {
         if (habit.id !== habitId) return habit;
@@ -334,6 +391,11 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
       habits: state.habits.filter((habit) => habit.id !== habitId),
       reflections: state.reflections.filter((reflection) => reflection.habitId !== habitId),
       adjustments: state.adjustments.filter((adjustment) => adjustment.habitId !== habitId),
+      coachExchanges: state.coachExchanges.map((exchange) =>
+        exchange.recommendation?.habitId === habitId
+          ? { ...exchange, recommendation: undefined }
+          : exchange,
+      ),
     }));
     persist(selectData(get()));
   },
@@ -403,13 +465,110 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
     persist(selectData(get()));
   },
 
+  recordCoachExchange: (question, result) => {
+    const exchangeId = nextId('coach');
+    const recommendation =
+      result.recommendation &&
+      !get().coachExchanges.some(
+        (exchange) => exchange.recommendation?.signature === result.recommendation?.signature,
+      )
+        ? {
+            ...result.recommendation,
+            id: nextId('coach-recommendation'),
+            status: 'open' as const,
+          }
+        : undefined;
+    set((state) => ({
+      coachExchanges: [
+        {
+          id: exchangeId,
+          question: question.trim(),
+          answer: result.answer,
+          source: result.source,
+          recommendation,
+          createdAt: new Date().toISOString(),
+        },
+        ...state.coachExchanges,
+      ].slice(0, 50),
+    }));
+    persist(selectData(get()));
+    return exchangeId;
+  },
+
+  acceptCoachRecommendation: (exchangeId) => {
+    const exchange = get().coachExchanges.find((candidate) => candidate.id === exchangeId);
+    const recommendation = exchange?.recommendation;
+    if (!recommendation || recommendation.status !== 'open') return undefined;
+    const habit = get().habits.find(
+      (candidate) => candidate.id === recommendation.habitId && !candidate.archivedAt,
+    );
+    if (!habit) return undefined;
+    const safeAdjustment = safeAdjustmentForHabit(habit, recommendation.adjustment);
+    if (!safeAdjustment) {
+      return 'This suggestion no longer fits your current habit settings.';
+    }
+
+    const now = new Date().toISOString();
+    const previousValue = describePreviousValue(habit, safeAdjustment);
+    set((state) => ({
+      habits: state.habits.map((candidate) =>
+        candidate.id === habit.id ? applyCoachingAdjustment(candidate, safeAdjustment) : candidate,
+      ),
+      adjustments: [
+        {
+          id: nextId('adjustment'),
+          habitId: habit.id,
+          suggestionId: recommendation.id,
+          date: toLocalDateKey(),
+          adjustment: safeAdjustment,
+          previousValue,
+          createdAt: now,
+        },
+        ...state.adjustments,
+      ],
+      coachExchanges: state.coachExchanges.map((candidate) =>
+        candidate.id === exchangeId && candidate.recommendation
+          ? {
+              ...candidate,
+              recommendation: {
+                ...candidate.recommendation,
+                status: 'accepted' as const,
+                resolvedAt: now,
+              },
+            }
+          : candidate,
+      ),
+    }));
+    const data = selectData(get());
+    persist(data);
+    return `Updated. ${habit.name} now uses the suggested adjustment.`;
+  },
+
+  rejectCoachRecommendation: (exchangeId) => {
+    const now = new Date().toISOString();
+    set((state) => ({
+      coachExchanges: state.coachExchanges.map((candidate) =>
+        candidate.id === exchangeId && candidate.recommendation?.status === 'open'
+          ? {
+              ...candidate,
+              recommendation: {
+                ...candidate.recommendation,
+                status: 'rejected' as const,
+                resolvedAt: now,
+              },
+            }
+          : candidate,
+      ),
+    }));
+    persist(selectData(get()));
+  },
+
   setNotificationsEnabled: (enabled) => {
     set((state) => ({
       notificationPreference: { ...state.notificationPreference, enabled },
     }));
     const data = selectData(get());
     persist(data);
-    syncNotifications(data);
   },
 
   setDefaultReminderTime: (time) => {

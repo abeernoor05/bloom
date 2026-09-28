@@ -123,14 +123,38 @@ export interface NotificationPreference {
   defaultReminderTime: string;
 }
 
+export type CoachRecommendationStatus = 'open' | 'accepted' | 'rejected';
+
+export interface CoachRecommendation {
+  id: string;
+  habitId: string;
+  title: string;
+  message: string;
+  actionLabel: string;
+  adjustment: CoachingAdjustment;
+  signature: string;
+  status: CoachRecommendationStatus;
+  resolvedAt?: string;
+}
+
+export interface CoachExchange {
+  id: string;
+  question: string;
+  answer: string;
+  source: 'ai' | 'local';
+  recommendation?: CoachRecommendation;
+  createdAt: string;
+}
+
 export interface BloomData {
-  schemaVersion: 3;
+  schemaVersion: 4;
   onboardingCompleted: boolean;
   goal: Goal | null;
   habits: Habit[];
   reflections: HabitReflection[];
   adjustments: HabitAdjustmentRecord[];
   coachingDecisions: CoachingDecision[];
+  coachExchanges: CoachExchange[];
   notificationPreference: NotificationPreference;
 }
 

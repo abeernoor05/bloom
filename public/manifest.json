@@ -1,12 +1,12 @@
 {
-  "name": "Your App Name",
-  "short_name": "Your App",
-  "description": "An app built with Bilt",
+  "name": "Bloom",
+  "short_name": "Bloom",
+  "description": "A gentle habit coach for building routines that last.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#6366f1",
+  "theme_color": "#42815d",
   "background_color": "#ffffff",
   "icons": [
     {

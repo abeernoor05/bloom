@@ -57,7 +57,7 @@ export function CoachingCard({ suggestion, onAccept, onReject }: CoachingCardPro
         </View>
         <View className="min-w-0 flex-1">
           <Typography type="body-xs" className="text-accent mb-1 font-semibold">
-            A SMALL ADJUSTMENT
+            Coaching suggestion
           </Typography>
           <Typography type="h3" className="text-foreground text-lg font-bold">
             {suggestion.title}
@@ -81,10 +81,12 @@ export function CoachingCard({ suggestion, onAccept, onReject }: CoachingCardPro
 
 export function CoachingConfirmation({ message }: { message: string }) {
   return (
-    <Card className="border-accent/25 mb-6 rounded-2xl border px-4 py-3">
-      <Typography type="body-sm" className="text-foreground font-medium">
-        {message}
-      </Typography>
-    </Card>
+    <View accessible accessibilityRole="alert" accessibilityLiveRegion="polite">
+      <Card className="border-accent/25 mb-6 rounded-2xl border px-4 py-3">
+        <Typography type="body-sm" className="text-foreground font-medium">
+          {message}
+        </Typography>
+      </Card>
+    </View>
   );
 }

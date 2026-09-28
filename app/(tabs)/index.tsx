@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Leaf } from 'lucide-react-native';
-import { Card, Typography, useThemeColor } from 'heroui-native';
+import { Leaf, Sparkles } from 'lucide-react-native';
+import { Button, Card, Typography, useThemeColor } from 'heroui-native';
 
 import { AddHabitSheet } from '@/components/bloom/AddHabitSheet';
 import {
@@ -118,6 +118,11 @@ export default function TodayScreen() {
         ) : reflectionCandidate ? (
           <ReflectionPromptCard habit={reflectionCandidate} />
         ) : null}
+
+        <Button variant="secondary" className="mb-6" onPress={() => router.push('/coach')}>
+          <Sparkles color={accent} size={18} />
+          <Button.Label>Ask your coach</Button.Label>
+        </Button>
 
         <View className="mb-4 flex-row items-center justify-between">
           <Typography type="h2" className="text-foreground text-xl font-bold">

@@ -12,9 +12,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: 'Bloom',
     slug: 'bloom',
+    description: 'A gentle habit coach for building routines that last.',
     version: process.env.BILT_APP_VERSION ?? '1.0.0',
     orientation: 'portrait',
-    userInterfaceStyle: 'automatic',
+    userInterfaceStyle: 'light',
+    icon: './public/icons/icon-512.png',
     scheme: 'bloom',
     runtimeVersion: {
       policy: 'appVersion',

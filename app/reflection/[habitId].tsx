@@ -58,7 +58,7 @@ export default function ReflectionScreen() {
             </Typography>
           </View>
 
-          <View className="mb-5 gap-3">
+          <View className="mb-5 gap-3" accessibilityRole="radiogroup">
             {REFLECTION_REASONS.map((option) => {
               const selected = reason === option.id;
               return (
@@ -66,7 +66,8 @@ export default function ReflectionScreen() {
                   key={option.id}
                   variant={selected ? 'primary' : 'secondary'}
                   onPress={() => setReason(option.id)}
-                  accessibilityState={{ selected }}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected }}
                   className="min-h-14 justify-start"
                 >
                   <Button.Label>{option.label}</Button.Label>
