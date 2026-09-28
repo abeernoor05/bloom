@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { router } from 'expo-router';
 import { Card, Chip, Typography, useThemeColor } from 'heroui-native';
-import { ChevronRight, Flame, Leaf, Sparkles, Sprout, Target } from 'lucide-react-native';
+import { ChevronRight, Flame, Leaf, Sparkles, Target } from 'lucide-react-native';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 
@@ -46,18 +46,13 @@ export default function ProgressScreen() {
           <>
             <Card className="bg-accent relative mt-7 overflow-hidden rounded-[26px] border-0 p-6">
               <BotanicalAccent onDark className="absolute -top-1 -right-1 opacity-20" />
-              <View className="mb-5 flex-row items-center gap-3">
-                <View className="bg-accent-foreground/15 size-10 items-center justify-center rounded-full">
-                  <Sprout color="#FFF9EE" size={19} />
-                </View>
-                <View>
-                  <Typography type="body-xs" className="text-accent-foreground/70">
-                    THIS WEEK
-                  </Typography>
-                  <Typography type="h3" className="text-accent-foreground">
-                    {percent(progress.week.rate)}% consistency
-                  </Typography>
-                </View>
+              <View className="mb-5">
+                <Typography type="body-xs" className="text-accent-foreground/70">
+                  THIS WEEK
+                </Typography>
+                <Typography type="h3" className="text-accent-foreground">
+                  {percent(progress.week.rate)}% consistency
+                </Typography>
               </View>
               <View className="bg-accent-foreground/20 h-2 overflow-hidden rounded-full">
                 <View
