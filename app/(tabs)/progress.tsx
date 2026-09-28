@@ -1,17 +1,44 @@
 import { useMemo } from 'react';
 import { router } from 'expo-router';
-import { Card, Chip, Typography, useThemeColor } from 'heroui-native';
-import { ChevronRight, Flame, Leaf, Sparkles, Target } from 'lucide-react-native';
+import { Card, Typography, useThemeColor } from 'heroui-native';
+import { ChevronRight, Feather, Sunrise } from 'lucide-react-native';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 
 import { BloomHeading } from '@/components/bloom/BloomHeading';
-import { BotanicalAccent } from '@/components/bloom/BotanicalAccent';
-import { calculateHabitMetrics } from '@/lib/bloom/habitMetrics';
-import { calculateOverallProgress } from '@/lib/bloom/progressMetrics';
+import { calculateHabitMetrics, dateFromKey } from '@/lib/bloom/habitMetrics';
+import { calculateOverallProgress, type ProgressDay } from '@/lib/bloom/progressMetrics';
 import { useBloomStore } from '@/lib/bloom/store';
 
 const percent = (value: number | undefined) => Math.round((value ?? 0) * 100);
+
+interface WeekSummary {
+  completed: number;
+  label: string;
+  rate: number | undefined;
+  scheduled: number;
+}
+
+function summarizeWeeks(days: ProgressDay[]): WeekSummary[] {
+  return Array.from({ length: 4 }, (_, index) => {
+    const week = days.slice(index * 7, index * 7 + 7);
+    const completed = week.reduce((total, day) => total + day.completed, 0);
+    const scheduled = week.reduce((total, day) => total + day.scheduled, 0);
+    const firstDate = week[0]?.date;
+
+    return {
+      completed,
+      scheduled,
+      rate: scheduled > 0 ? completed / scheduled : undefined,
+      label: firstDate
+        ? new Intl.DateTimeFormat('en', {
+            day: 'numeric',
+            ...(index === 0 ? { month: 'short' as const } : {}),
+          }).format(dateFromKey(firstDate))
+        : '—',
+    };
+  });
+}
 
 export default function ProgressScreen() {
   const habits = useBloomStore((state) => state.habits);
@@ -25,18 +52,29 @@ export default function ProgressScreen() {
   const strongest = [...habitMetrics].sort(
     (a, b) => b.metrics.completionRate - a.metrics.completionRate,
   )[0];
+  const weeks = useMemo(() => summarizeWeeks(progress.recentDays), [progress.recentDays]);
+  const fourWeekCompleted = weeks.reduce((total, week) => total + week.completed, 0);
+  const fourWeekScheduled = weeks.reduce((total, week) => total + week.scheduled, 0);
+  const fourWeekRate = fourWeekScheduled > 0 ? fourWeekCompleted / fourWeekScheduled : undefined;
+  const firstWeekRate = weeks[0]?.rate;
+  const lastWeekRate = weeks.at(-1)?.rate;
+  const comparison =
+    firstWeekRate !== undefined && lastWeekRate !== undefined && lastWeekRate > firstWeekRate
+      ? `up from ${percent(firstWeekRate)}%`
+      : `${fourWeekCompleted} of ${fourWeekScheduled} completed`;
 
   return (
     <SafeAreaView className="bg-background flex-1" edges={['top']}>
-      <ScrollView contentContainerClassName="px-5 pb-32 pt-7" showsVerticalScrollIndicator={false}>
-        <Typography type="body-sm" className="text-muted mb-1">
-          Meaningful, not perfect
+      <ScrollView contentContainerClassName="px-6 pb-28 pt-4" showsVerticalScrollIndicator={false}>
+        <Typography type="body-xs" className="text-accent-soft-foreground font-semibold">
+          YOUR LAST 4 WEEKS
         </Typography>
-        <BloomHeading level="hero">Your progress</BloomHeading>
-        <BotanicalAccent size="sm" className="mt-1" />
+        <BloomHeading level="hero" className="mt-1">
+          Consistency has a shape.
+        </BloomHeading>
 
         {activeHabits.length === 0 ? (
-          <Card className="border-border bg-surface mt-7 rounded-[22px] border p-6">
+          <Card className="border-border bg-surface mt-6 rounded-[24px] border p-6">
             <BloomHeading level="section">Your story starts here</BloomHeading>
             <Typography type="body-sm" className="text-muted mt-2">
               Add a habit to begin seeing gentle patterns.
@@ -44,103 +82,116 @@ export default function ProgressScreen() {
           </Card>
         ) : (
           <>
-            <Card className="bg-accent relative mt-7 overflow-hidden rounded-[26px] border-0 p-6">
-              <BotanicalAccent onDark className="absolute -top-1 -right-1 opacity-20" />
-              <View className="mb-5">
-                <Typography type="body-xs" className="text-accent-foreground/70">
-                  THIS WEEK
-                </Typography>
-                <Typography type="h3" className="text-accent-foreground">
-                  {percent(progress.week.rate)}% consistency
+            <Card
+              className="bg-accent mt-5 rounded-[24px] border-0 px-5 py-5"
+              style={{ borderTopRightRadius: 68 }}
+            >
+              <View className="bg-default mb-4 self-start rounded-full px-3 py-1.5">
+                <Typography type="body-xs" className="text-foreground">
+                  Showing up
                 </Typography>
               </View>
-              <View className="bg-accent-foreground/20 h-2 overflow-hidden rounded-full">
-                <View
-                  className="bg-accent-foreground h-full rounded-full"
-                  style={{ width: `${percent(progress.week.rate)}%` }}
-                />
+
+              <View className="flex-row items-end justify-between gap-5">
+                <Typography
+                  className="text-accent-foreground"
+                  style={{ fontFamily: 'Lora_400Regular', fontSize: 38, lineHeight: 46 }}
+                >
+                  {percent(fourWeekRate)}%
+                </Typography>
+                <Typography
+                  type="body-xs"
+                  className="text-sage mb-1 max-w-[152px] flex-1 text-right leading-4"
+                >
+                  of planned moments, {comparison}
+                </Typography>
               </View>
-              <Typography type="body-sm" className="text-accent-foreground/75 mt-4">
-                {progress.week.completed} of {progress.week.scheduled} scheduled moments
-              </Typography>
+
+              <View className="mt-4 h-[120px] flex-row items-end justify-between">
+                {weeks.map((week, index) => {
+                  const fillHeight = week.rate === undefined ? 6 : Math.max(10, percent(week.rate));
+                  return (
+                    <View
+                      key={week.label}
+                      className="h-full w-[52px] items-center justify-end"
+                      accessible
+                      accessibilityLabel={`${week.label}: ${percent(week.rate)}% complete`}
+                    >
+                      <View className="bg-accent-soft/15 h-24 w-[18px] justify-end overflow-hidden rounded-full">
+                        <View
+                          className={
+                            index === weeks.length - 1
+                              ? 'bg-gold w-full rounded-full'
+                              : 'bg-sage w-full rounded-full'
+                          }
+                          style={{ height: Math.round((fillHeight / 100) * 96) }}
+                        />
+                      </View>
+                      <Typography type="body-xs" className="text-sage mt-2">
+                        {week.label}
+                      </Typography>
+                    </View>
+                  );
+                })}
+              </View>
             </Card>
 
-            <View className="mt-4 flex-row gap-3">
-              <Card className="border-border bg-surface flex-1 rounded-[22px] border p-4">
-                <Flame color={accent} size={20} />
-                <Typography type="h3" className="text-foreground mt-3">
-                  {progress.longestStreak}
-                </Typography>
-                <Typography type="body-xs" className="text-muted mt-1">
-                  day best rhythm
-                </Typography>
-              </Card>
-              <Card className="border-border bg-surface flex-1 rounded-[22px] border p-4">
-                <Target color={accent} size={20} />
-                <Typography type="h3" className="text-foreground mt-3">
-                  {percent(progress.month.rate)}%
-                </Typography>
-                <Typography type="body-xs" className="text-muted mt-1">
-                  this month
-                </Typography>
-              </Card>
+            <View className="mt-5">
+              <Typography type="body-sm" className="text-foreground font-semibold">
+                What your practice is teaching us
+              </Typography>
+              <View className="bg-border mt-2 h-px" />
             </View>
 
-            {strongest ? (
-              <Card className="border-sage bg-background-tertiary mt-5 rounded-[22px] border p-5">
-                <View className="flex-row items-start gap-3">
-                  <Sparkles color={accent} size={19} />
-                  <View className="flex-1">
-                    <Typography type="body-xs" className="text-terracotta mb-1 font-semibold">
-                      A PATTERN TO NOTICE
-                    </Typography>
-                    <BloomHeading level="section">
-                      {strongest.habit.name} is taking root
-                    </BloomHeading>
-                    <Typography type="body-sm" className="text-muted mt-2 leading-5">
-                      You have completed {strongest.metrics.completedCount} scheduled moments. Keep
-                      the conditions that made this feel possible.
-                    </Typography>
-                  </View>
-                </View>
-              </Card>
-            ) : null}
-
-            <View className="mt-8 mb-4">
-              <BloomHeading level="section">Habit insights</BloomHeading>
-            </View>
-            <View className="gap-3">
-              {habitMetrics.map(({ habit, metrics }) => (
-                <Pressable
-                  key={habit.id}
-                  onPress={() =>
-                    router.push({ pathname: '/habits/[id]', params: { id: habit.id } })
-                  }
-                  accessibilityRole="button"
-                >
-                  <Card className="border-border bg-surface flex-row items-center rounded-[20px] border p-4">
-                    <View className="bg-accent-soft mr-3 size-10 items-center justify-center rounded-full">
-                      <Leaf color={accent} size={17} />
-                    </View>
-                    <View className="flex-1">
-                      <Typography type="body-sm" className="text-foreground font-medium">
-                        {habit.name}
-                      </Typography>
-                      <View className="mt-2 flex-row gap-2">
-                        <Chip size="sm" variant="secondary">
-                          <Chip.Label>
-                            {Math.round(metrics.completionRate * 100)}% overall
-                          </Chip.Label>
-                        </Chip>
-                        <Chip size="sm" variant="secondary">
-                          <Chip.Label>{metrics.current} streak</Chip.Label>
-                        </Chip>
+            <View>
+              {habitMetrics.map(({ habit, metrics }, index) => {
+                const InsightIcon = index % 2 === 0 ? Sunrise : Feather;
+                return (
+                  <Pressable
+                    key={habit.id}
+                    onPress={() =>
+                      router.push({ pathname: '/habits/[id]', params: { id: habit.id } })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`View insights for ${habit.name}`}
+                  >
+                    <View className="border-border flex-row items-start gap-3 border-b py-3">
+                      <View
+                        className={
+                          index % 2 === 0
+                            ? 'bg-background-tertiary size-10 items-center justify-center rounded-full'
+                            : 'bg-default size-10 items-center justify-center rounded-full'
+                        }
+                      >
+                        <InsightIcon color={accent} size={18} strokeWidth={1.6} />
                       </View>
+                      <View className="flex-1">
+                        <Typography type="body-sm" className="text-foreground font-medium">
+                          {habit.name}
+                        </Typography>
+                        <Typography type="body-xs" className="text-muted mt-0.5 leading-4">
+                          {metrics.completedCount} of {metrics.scheduledCount} scheduled moments
+                          completed · {percent(metrics.completionRate)}% overall
+                        </Typography>
+                      </View>
+                      <ChevronRight color={muted} size={17} />
                     </View>
-                    <ChevronRight color={muted} size={18} />
-                  </Card>
-                </Pressable>
-              ))}
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View className="mt-5 flex-row items-center gap-3">
+              <View className="bg-terracotta size-2.5 rotate-45" />
+              <Typography
+                className="text-muted flex-1"
+                style={{ fontFamily: 'Lora_400Regular', fontSize: 14, lineHeight: 20 }}
+              >
+                {progress.insight ??
+                  (strongest
+                    ? `${strongest.habit.name} is taking root. Keep the conditions that made it feel possible.`
+                    : 'Each check-in helps your rhythm become clearer.')}
+              </Typography>
             </View>
           </>
         )}
