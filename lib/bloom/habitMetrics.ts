@@ -38,7 +38,7 @@ export function isHabitCompleteOnDate(habit: Habit, dateKey: string): boolean {
   );
 }
 
-function isWithinHabitLifetime(habit: Habit, dateKey: string): boolean {
+export function isHabitWithinLifetime(habit: Habit, dateKey: string): boolean {
   const createdDate = toLocalDateKey(new Date(habit.createdAt));
   const archivedDate = habit.archivedAt ? toLocalDateKey(new Date(habit.archivedAt)) : undefined;
   return dateKey >= createdDate && (!archivedDate || dateKey < archivedDate);
@@ -60,7 +60,7 @@ function completionsInWeek(habit: Habit, weekStart: string, throughDate?: string
 }
 
 export function isHabitScheduledOnDate(habit: Habit, dateKey: string): boolean {
-  if (!isWithinHabitLifetime(habit, dateKey)) return false;
+  if (!isHabitWithinLifetime(habit, dateKey)) return false;
   if (habit.frequency.scheduleType === 'daily') return true;
   if (habit.frequency.scheduleType === 'specific-days') {
     return (habit.frequency.scheduledWeekdays ?? []).some(
@@ -77,7 +77,7 @@ function fixedScheduleDates(habit: Habit, endDate: string): string[] {
   const startDate = toLocalDateKey(new Date(habit.createdAt));
   const dates: string[] = [];
   for (let date = startDate; date <= endDate; date = addDaysToKey(date, 1)) {
-    if (isWithinHabitLifetime(habit, date)) {
+    if (isHabitWithinLifetime(habit, date)) {
       const isScheduled =
         habit.frequency.scheduleType === 'daily' ||
         (habit.frequency.scheduledWeekdays ?? []).some(

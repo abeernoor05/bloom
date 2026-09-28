@@ -13,7 +13,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { Button, Card, Dialog, Typography, useThemeColor } from 'heroui-native';
 
 import { HabitScreenHeader } from '@/components/bloom/HabitScreenHeader';
-import { HABIT_ICONS } from '@/components/bloom/habitVisuals';
+import { HabitIcon } from '@/components/bloom/habitVisuals';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 import { buildHabitInsights } from '@/lib/bloom/coaching';
 import {
@@ -60,7 +60,6 @@ export default function HabitDetailsScreen() {
     );
   }
 
-  const Icon = HABIT_ICONS[habit.icon];
   const metrics = calculateHabitMetrics(habit);
   const recentDates = recentDateKeys(21);
   const insights = buildHabitInsights(habit, reflections, adjustments);
@@ -90,7 +89,7 @@ export default function HabitDetailsScreen() {
 
         <View className="mb-7 items-center">
           <View className="bg-accent-soft mb-4 size-16 items-center justify-center rounded-3xl">
-            <Icon color={accent} size={29} />
+            <HabitIcon icon={habit.icon} color={accent} size={29} />
           </View>
           <Typography type="h1" className="text-foreground text-center text-3xl font-bold">
             {habit.name}
@@ -128,10 +127,29 @@ export default function HabitDetailsScreen() {
           </Card>
           <Card className="border-border flex-1 rounded-3xl border p-4">
             <Typography type="h2" className="text-foreground text-2xl font-bold">
-              {Math.round(metrics.completionRate * 100)}%
+              {metrics.scheduledCount > 0 ? `${Math.round(metrics.completionRate * 100)}%` : '—'}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
               Completion
+            </Typography>
+          </Card>
+        </View>
+
+        <View className="mb-4 flex-row gap-3">
+          <Card className="border-border flex-1 rounded-3xl border p-4">
+            <Typography type="h2" className="text-foreground text-2xl font-bold">
+              {metrics.completedCount}
+            </Typography>
+            <Typography type="body-xs" className="text-muted mt-1">
+              Completed occurrences
+            </Typography>
+          </Card>
+          <Card className="border-border flex-1 rounded-3xl border p-4">
+            <Typography type="h2" className="text-foreground text-2xl font-bold">
+              {adjustments.filter((adjustment) => adjustment.habitId === habit.id).length}
+            </Typography>
+            <Typography type="body-xs" className="text-muted mt-1">
+              Helpful adjustments
             </Typography>
           </Card>
         </View>
@@ -199,7 +217,21 @@ export default function HabitDetailsScreen() {
               ))}
             </View>
           </Card>
-        ) : null}
+        ) : (
+          <Card className="border-border mb-4 rounded-3xl border p-5">
+            <View className="mb-3 flex-row items-center gap-3">
+              <View className="bg-accent-soft size-9 items-center justify-center rounded-2xl">
+                <Lightbulb color={accent} size={18} />
+              </View>
+              <Typography type="h2" className="text-foreground text-lg font-bold">
+                Insights
+              </Typography>
+            </View>
+            <Typography type="body-sm" className="text-muted">
+              Keep checking in. A useful pattern will appear here when there is enough history.
+            </Typography>
+          </Card>
+        )}
 
         <Card className="border-border mb-7 rounded-3xl border p-5">
           <View className="mb-4 flex-row items-center gap-3">

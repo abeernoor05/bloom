@@ -1,9 +1,14 @@
+import type { ComponentProps } from 'react';
 import { BookOpen, Droplets, Footprints, Sparkles } from 'lucide-react-native';
 
-import type { HabitIcon } from '@/lib/bloom/types';
+import type { HabitIcon as HabitIconId } from '@/lib/bloom/types';
+
+type HabitIconProps = ComponentProps<typeof BookOpen> & {
+  icon: HabitIconId;
+};
 
 export const HABIT_ICON_OPTIONS: {
-  id: HabitIcon;
+  id: HabitIconId;
   label: string;
   Icon: typeof BookOpen;
 }[] = [
@@ -13,9 +18,16 @@ export const HABIT_ICON_OPTIONS: {
   { id: 'water', label: 'Water', Icon: Droplets },
 ];
 
-export const HABIT_ICONS = {
-  book: BookOpen,
-  walk: Footprints,
-  water: Droplets,
-  sparkles: Sparkles,
-} as const;
+export function HabitIcon({ icon, ...props }: HabitIconProps) {
+  switch (icon) {
+    case 'book':
+      return <BookOpen {...props} />;
+    case 'walk':
+      return <Footprints {...props} />;
+    case 'water':
+      return <Droplets {...props} />;
+    case 'sparkles':
+    default:
+      return <Sparkles {...props} />;
+  }
+}

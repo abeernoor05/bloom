@@ -55,7 +55,7 @@ function sampleHabit(
 
 export function createInitialBloomData(): BloomData {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     onboardingCompleted: false,
     goal: null,
     habits: [
@@ -66,5 +66,6 @@ export function createInitialBloomData(): BloomData {
     reflections: [],
     adjustments: [],
     coachingDecisions: [],
+    notificationPreference: { enabled: true, defaultReminderTime: '8:00 AM' },
   };
 }

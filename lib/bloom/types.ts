@@ -118,14 +118,20 @@ export interface CoachingDecision {
   resolvedAt: string;
 }
 
+export interface NotificationPreference {
+  enabled: boolean;
+  defaultReminderTime: string;
+}
+
 export interface BloomData {
-  schemaVersion: 2;
+  schemaVersion: 3;
   onboardingCompleted: boolean;
   goal: Goal | null;
   habits: Habit[];
   reflections: HabitReflection[];
   adjustments: HabitAdjustmentRecord[];
   coachingDecisions: CoachingDecision[];
+  notificationPreference: NotificationPreference;
 }
 
 export interface ReflectionInput {

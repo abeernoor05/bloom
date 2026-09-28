@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Leaf } from 'lucide-react-native';
-import { Typography, useThemeColor } from 'heroui-native';
+import { Card, Typography, useThemeColor } from 'heroui-native';
 
 import { AddHabitSheet } from '@/components/bloom/AddHabitSheet';
 import {
@@ -39,9 +39,8 @@ export default function TodayScreen() {
   const [confirmation, setConfirmation] = useState<string>();
   const [accent] = useThemeColor(['accent']);
   const today = toLocalDateKey();
-  const todaysHabits = habits.filter(
-    (habit) => !habit.archivedAt && isHabitScheduledOnDate(habit, today),
-  );
+  const activeHabits = habits.filter((habit) => !habit.archivedAt);
+  const todaysHabits = activeHabits.filter((habit) => isHabitScheduledOnDate(habit, today));
   const completedCount = todaysHabits.filter((habit) => isHabitCompleteOnDate(habit, today)).length;
   const progress = todaysHabits.length === 0 ? 0 : completedCount / todaysHabits.length;
   const suggestion = getActiveCoachingSuggestion(habits, reflections, coachingDecisions);
@@ -98,9 +97,11 @@ export default function TodayScreen() {
           <Typography type="body-xs" className="text-background/70 mt-4">
             {completedCount === todaysHabits.length && todaysHabits.length > 0
               ? 'You showed up for yourself today.'
-              : todaysHabits.length === 0
-                ? 'A lighter day can be part of a steady rhythm.'
-                : 'Steady beats perfect. Keep going at your pace.'}
+              : todaysHabits.length === 0 && activeHabits.length === 0
+                ? 'Create one small habit when you are ready.'
+                : todaysHabits.length === 0
+                  ? 'Nothing is scheduled today. A lighter day supports a steady rhythm.'
+                  : 'Steady beats perfect. Keep going at your pace.'}
           </Typography>
         </View>
 
@@ -126,6 +127,19 @@ export default function TodayScreen() {
             {todaysHabits.length} today
           </Typography>
         </View>
+
+        {todaysHabits.length === 0 ? (
+          <Card className="border-border rounded-3xl border p-6">
+            <Typography type="h2" className="text-foreground text-lg font-bold">
+              {activeHabits.length === 0 ? 'No active habits yet' : 'Nothing scheduled today'}
+            </Typography>
+            <Typography type="body-sm" className="text-muted mt-2">
+              {activeHabits.length === 0
+                ? 'Start with something small. Create one habit you would like to build.'
+                : 'Your scheduled habits will be here on the days you chose.'}
+            </Typography>
+          </Card>
+        ) : null}
 
         <View className="gap-3">
           {todaysHabits.map((habit, index) => (

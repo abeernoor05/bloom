@@ -11,7 +11,7 @@ import * as Haptics from 'expo-haptics';
 import { Check, ChevronRight, Flame } from 'lucide-react-native';
 import { Card, Typography, useThemeColor } from 'heroui-native';
 
-import { HABIT_ICONS } from '@/components/bloom/habitVisuals';
+import { HabitIcon } from '@/components/bloom/habitVisuals';
 import type { Habit } from '@/lib/bloom/types';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +25,6 @@ interface HabitCardProps {
 export function HabitCard({ habit, isComplete, onToggle, onPress }: HabitCardProps) {
   const scale = useSharedValue(1);
   const [accent, muted] = useThemeColor(['accent', 'muted']);
-  const Icon = HABIT_ICONS[habit.icon];
 
   useEffect(() => {
     if (isComplete) scale.set(withSequence(withSpring(1.018), withSpring(1)));
@@ -62,7 +61,12 @@ export function HabitCard({ habit, isComplete, onToggle, onPress }: HabitCardPro
                 isComplete ? 'bg-accent/15' : 'bg-background-secondary',
               )}
             >
-              <Icon color={isComplete ? accent : muted} size={22} strokeWidth={2.2} />
+              <HabitIcon
+                icon={habit.icon}
+                color={isComplete ? accent : muted}
+                size={22}
+                strokeWidth={2.2}
+              />
             </View>
 
             <View className="min-w-0 flex-1 gap-1.5">

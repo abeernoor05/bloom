@@ -1,8 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { Button, Input, Label, TextField, Typography, useThemeColor } from 'heroui-native';
 
 import { HABIT_ICON_OPTIONS } from '@/components/bloom/habitVisuals';
+import {
+  getNotificationAvailability,
+  requestNotificationPermission,
+  type NotificationAvailability,
+} from '@/lib/bloom/notifications';
+import { normalizeReminderTime, parseReminderTime } from '@/lib/bloom/reminderTime';
+import { useBloomStore } from '@/lib/bloom/store';
 import type {
   Habit,
   HabitFrequencyId,
@@ -28,13 +35,13 @@ const WEEKDAYS: { id: Weekday; label: string }[] = [
   { id: 0, label: 'S' },
 ];
 
-function inputFromHabit(habit?: Habit): HabitInput {
+function inputFromHabit(habit: Habit | undefined, defaultReminderTime: string): HabitInput {
   return {
     name: habit?.name ?? '',
     icon: habit?.icon ?? 'sparkles',
     description: habit?.description ?? '',
     reminderEnabled: habit?.reminder.enabled ?? true,
-    reminderTime: habit?.reminder.time ?? '8:00 AM',
+    reminderTime: habit?.reminder.time ?? defaultReminderTime,
     frequencyId: habit?.frequency.id ?? 'daily',
     scheduleType: habit?.frequency.scheduleType ?? 'daily',
     daysPerWeek: habit?.frequency.daysPerWeek ?? 3,
@@ -51,7 +58,14 @@ interface HabitFormProps {
 }
 
 export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormProps) {
-  const initial = useMemo(() => inputFromHabit(habit), [habit]);
+  const defaultReminderTime = useBloomStore(
+    (state) => state.notificationPreference.defaultReminderTime,
+  );
+  const setNotificationsEnabled = useBloomStore((state) => state.setNotificationsEnabled);
+  const initial = useMemo(
+    () => inputFromHabit(habit, defaultReminderTime),
+    [defaultReminderTime, habit],
+  );
   const [name, setName] = useState(initial.name);
   const [description, setDescription] = useState(initial.description ?? '');
   const [icon, setIcon] = useState(initial.icon);
@@ -65,11 +79,19 @@ export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormP
   const [targetValue, setTargetValue] = useState(initial.target?.value.toString() ?? '');
   const [targetUnit, setTargetUnit] = useState(initial.target?.unit ?? '');
   const [showErrors, setShowErrors] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [notificationAvailability, setNotificationAvailability] =
+    useState<NotificationAvailability>('undetermined');
   const [accent, muted] = useThemeColor(['accent', 'muted']);
+
+  useEffect(() => {
+    void getNotificationAvailability().then(setNotificationAvailability);
+  }, []);
 
   const validName = name.trim().length >= 2;
   const validSchedule = scheduleType !== 'specific-days' || scheduledWeekdays.length > 0;
-  const validReminder = !reminderEnabled || reminderTime.trim().length > 0;
+  const validReminder = !reminderEnabled || parseReminderTime(reminderTime) !== null;
   const validTarget =
     targetValue.trim().length === 0 ||
     (Number.isFinite(Number(targetValue)) &&
@@ -85,7 +107,28 @@ export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormP
     );
   };
 
+  const toggleReminder = async () => {
+    if (isRequestingPermission) return;
+    if (reminderEnabled) {
+      setReminderEnabled(false);
+      return;
+    }
+
+    setIsRequestingPermission(true);
+    try {
+      const availability = await requestNotificationPermission();
+      setNotificationAvailability(availability);
+      if (availability === 'granted') {
+        setNotificationsEnabled(true);
+        setReminderEnabled(true);
+      }
+    } finally {
+      setIsRequestingPermission(false);
+    }
+  };
+
   const save = () => {
+    if (isSubmitting) return;
     setShowErrors(true);
     if (!isValid) return;
     const selectedDays = scheduleType === 'specific-days' ? scheduledWeekdays : undefined;
@@ -97,21 +140,27 @@ export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormP
           : daysPerWeek;
     const frequencyId: HabitFrequencyId =
       scheduleType === 'daily' ? 'daily' : count >= 3 ? 'most-days' : 'few-days';
-    onSubmit({
-      name,
-      icon,
-      description,
-      reminderEnabled,
-      reminderTime,
-      frequencyId,
-      scheduleType,
-      daysPerWeek: count,
-      scheduledWeekdays: selectedDays,
-      target:
-        targetValue.trim() && targetUnit.trim()
-          ? { value: Number(targetValue), unit: targetUnit.trim() }
-          : undefined,
-    });
+    setIsSubmitting(true);
+    try {
+      onSubmit({
+        name,
+        icon,
+        description,
+        reminderEnabled,
+        reminderTime: normalizeReminderTime(reminderTime) ?? defaultReminderTime,
+        frequencyId,
+        scheduleType,
+        daysPerWeek: count,
+        scheduledWeekdays: selectedDays,
+        target:
+          targetValue.trim() && targetUnit.trim()
+            ? { value: Number(targetValue), unit: targetUnit.trim() }
+            : undefined,
+      });
+    } catch (error) {
+      setIsSubmitting(false);
+      throw error;
+    }
   };
 
   return (
@@ -186,6 +235,7 @@ export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormP
                 <Pressable
                   key={option.id}
                   onPress={() => setScheduleType(option.id)}
+                  accessibilityLabel={option.label}
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
                   className={cn(
@@ -285,16 +335,18 @@ export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormP
               Reminder
             </Typography>
             <Pressable
-              onPress={() => setReminderEnabled((current) => !current)}
+              disabled={isRequestingPermission}
+              onPress={() => void toggleReminder()}
+              accessibilityLabel="Habit reminder"
               accessibilityRole="switch"
-              accessibilityState={{ checked: reminderEnabled }}
+              accessibilityState={{ checked: reminderEnabled, disabled: isRequestingPermission }}
               className={cn(
                 'min-h-11 justify-center rounded-full border px-4',
                 reminderEnabled ? 'border-accent bg-accent-soft' : 'border-border bg-surface',
               )}
             >
               <Typography type="body-xs" className="text-foreground font-semibold">
-                {reminderEnabled ? 'On' : 'Off'}
+                {isRequestingPermission ? 'Checking…' : reminderEnabled ? 'On' : 'Off'}
               </Typography>
             </Pressable>
           </View>
@@ -304,8 +356,24 @@ export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormP
                 value={reminderTime}
                 onChangeText={setReminderTime}
                 placeholder="e.g. 9:00 PM"
+                accessibilityLabel="Reminder time"
               />
+              {showErrors && !validReminder ? (
+                <Typography type="body-xs" className="text-danger mt-1">
+                  Use a time such as 9:00 PM.
+                </Typography>
+              ) : null}
             </TextField>
+          ) : null}
+          {!reminderEnabled && notificationAvailability === 'denied' ? (
+            <Typography type="body-xs" className="text-muted">
+              Notifications are off in your device settings. You can still save this habit.
+            </Typography>
+          ) : null}
+          {!reminderEnabled && notificationAvailability === 'unavailable' ? (
+            <Typography type="body-xs" className="text-muted">
+              Reminders are unavailable on this device. You can still save this habit.
+            </Typography>
           ) : null}
         </View>
 
@@ -320,6 +388,7 @@ export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormP
                 onChangeText={setTargetValue}
                 placeholder="10"
                 keyboardType="decimal-pad"
+                accessibilityLabel="Target amount"
               />
             </TextField>
             <TextField className="flex-[2]" isInvalid={showErrors && !validTarget}>
@@ -327,6 +396,7 @@ export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormP
                 value={targetUnit}
                 onChangeText={setTargetUnit}
                 placeholder="pages, minutes…"
+                accessibilityLabel="Target unit"
               />
             </TextField>
           </View>
@@ -338,8 +408,8 @@ export function HabitForm({ habit, submitLabel, onCancel, onSubmit }: HabitFormP
         </View>
 
         <View className="mt-2 gap-3">
-          <Button size="lg" onPress={save}>
-            <Button.Label>{submitLabel}</Button.Label>
+          <Button size="lg" onPress={save} isDisabled={isSubmitting}>
+            <Button.Label>{isSubmitting ? 'Saving…' : submitLabel}</Button.Label>
           </Button>
           <Button size="lg" variant="ghost" onPress={onCancel}>
             <Button.Label>Cancel</Button.Label>

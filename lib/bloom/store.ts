@@ -3,6 +3,8 @@ import { create } from 'zustand';
 
 import { describePreviousValue, type CoachingSuggestion } from './coaching';
 import { calculateHabitMetrics, toLocalDateKey, upsertCompletion } from './habitMetrics';
+import { reconcileHabitNotifications } from './notifications';
+import { normalizeReminderTime } from './reminderTime';
 import { createInitialBloomData } from './sampleData';
 import { HABIT_FREQUENCIES } from './types';
 import type {
@@ -19,7 +21,7 @@ import type {
 
 const STORAGE_KEY = '@bloom/data/v1';
 
-type HydrationStatus = 'idle' | 'loading' | 'ready';
+type HydrationStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 interface BloomStore extends BloomData {
   hydrationStatus: HydrationStatus;
@@ -34,10 +36,16 @@ interface BloomStore extends BloomData {
   addReflection: (input: ReflectionInput) => string;
   acceptCoachingSuggestion: (suggestion: CoachingSuggestion) => string | undefined;
   rejectCoachingSuggestion: (suggestionId: string) => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
+  setDefaultReminderTime: (time: string) => void;
 }
 
 function persist(data: BloomData) {
   void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function syncNotifications(data: BloomData) {
+  void reconcileHabitNotifications(data.habits, data.notificationPreference);
 }
 
 function selectData(state: BloomStore): BloomData {
@@ -49,6 +57,7 @@ function selectData(state: BloomStore): BloomData {
     reflections: state.reflections,
     adjustments: state.adjustments,
     coachingDecisions: state.coachingDecisions,
+    notificationPreference: state.notificationPreference,
   };
 }
 
@@ -60,6 +69,7 @@ interface StoredBloomData {
   reflections?: BloomData['reflections'];
   adjustments?: BloomData['adjustments'];
   coachingDecisions?: BloomData['coachingDecisions'];
+  notificationPreference?: BloomData['notificationPreference'];
 }
 
 function isStoredBloomData(value: unknown): value is StoredBloomData {
@@ -67,7 +77,7 @@ function isStoredBloomData(value: unknown): value is StoredBloomData {
     typeof value === 'object' &&
     value !== null &&
     'schemaVersion' in value &&
-    (value.schemaVersion === 1 || value.schemaVersion === 2) &&
+    (value.schemaVersion === 1 || value.schemaVersion === 2 || value.schemaVersion === 3) &&
     'onboardingCompleted' in value &&
     typeof value.onboardingCompleted === 'boolean' &&
     'goal' in value &&
@@ -126,7 +136,7 @@ function normalizeHabit(habit: Habit): Habit {
     frequency: normalizedFrequency(habit.frequency),
     reminder: {
       enabled: habit.reminder?.enabled ?? true,
-      time: habit.reminder?.time || '8:00 AM',
+      time: normalizeReminderTime(habit.reminder?.time ?? '') ?? '8:00 AM',
       timezone: habit.reminder?.timezone,
     },
     completions: (habit.completions ?? []).map((completion) => ({
@@ -172,13 +182,19 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
         const data: unknown = JSON.parse(stored);
         if (isStoredBloomData(data)) {
           const normalized: BloomData = {
-            schemaVersion: 2,
+            schemaVersion: 3,
             onboardingCompleted: data.onboardingCompleted,
             goal: data.goal,
             habits: data.habits.map(normalizeHabit),
             reflections: Array.isArray(data.reflections) ? data.reflections : [],
             adjustments: Array.isArray(data.adjustments) ? data.adjustments : [],
             coachingDecisions: Array.isArray(data.coachingDecisions) ? data.coachingDecisions : [],
+            notificationPreference: {
+              enabled: data.notificationPreference?.enabled ?? true,
+              defaultReminderTime:
+                normalizeReminderTime(data.notificationPreference?.defaultReminderTime ?? '') ??
+                '8:00 AM',
+            },
           };
           set({ ...normalized, hydrationStatus: 'ready' });
           persist(normalized);
@@ -257,7 +273,12 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
       description: input.description?.trim() || undefined,
       target: input.target,
       frequency: frequencyFromInput(input),
-      reminder: { enabled: input.reminderEnabled, time: input.reminderTime.trim() },
+      reminder: {
+        enabled: input.reminderEnabled,
+        time:
+          normalizeReminderTime(input.reminderTime) ??
+          get().notificationPreference.defaultReminderTime,
+      },
       completions: [],
       streak: { current: 0, best: 0 },
       createdAt: now,
@@ -280,7 +301,12 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
           description: input.description?.trim() || undefined,
           target: input.target,
           frequency: frequencyFromInput(input),
-          reminder: { enabled: input.reminderEnabled, time: input.reminderTime.trim() },
+          reminder: {
+            enabled: input.reminderEnabled,
+            time:
+              normalizeReminderTime(input.reminderTime) ??
+              get().notificationPreference.defaultReminderTime,
+          },
           updatedAt: new Date().toISOString(),
         });
       }),
@@ -373,6 +399,27 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
         { suggestionId, status: 'rejected', resolvedAt: now },
         ...state.coachingDecisions.filter((decision) => decision.suggestionId !== suggestionId),
       ],
+    }));
+    persist(selectData(get()));
+  },
+
+  setNotificationsEnabled: (enabled) => {
+    set((state) => ({
+      notificationPreference: { ...state.notificationPreference, enabled },
+    }));
+    const data = selectData(get());
+    persist(data);
+    syncNotifications(data);
+  },
+
+  setDefaultReminderTime: (time) => {
+    const normalized = normalizeReminderTime(time);
+    if (!normalized) return;
+    set((state) => ({
+      notificationPreference: {
+        ...state.notificationPreference,
+        defaultReminderTime: normalized,
+      },
     }));
     persist(selectData(get()));
   },

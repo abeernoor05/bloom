@@ -4,7 +4,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { Card, Typography, useThemeColor } from 'heroui-native';
 
 import { AddHabitSheet } from '@/components/bloom/AddHabitSheet';
-import { HABIT_ICONS } from '@/components/bloom/habitVisuals';
+import { HabitIcon } from '@/components/bloom/habitVisuals';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 import {
   calculateHabitMetrics,
@@ -22,7 +22,6 @@ export default function HabitsScreen() {
   const archivedHabits = habits.filter((habit) => habit.archivedAt);
 
   const habitRow = (habit: (typeof habits)[number]) => {
-    const Icon = HABIT_ICONS[habit.icon];
     const metrics = calculateHabitMetrics(habit);
     const complete = isHabitCompleteOnDate(habit, today);
     return (
@@ -35,7 +34,7 @@ export default function HabitsScreen() {
         <Card className="border-border rounded-3xl border p-5">
           <View className="flex-row items-center">
             <View className="bg-accent-soft mr-4 size-12 items-center justify-center rounded-2xl">
-              <Icon color={accent} size={21} />
+              <HabitIcon icon={habit.icon} color={accent} size={21} />
             </View>
             <View className="min-w-0 flex-1 gap-1">
               <Typography type="body" className="text-foreground font-semibold" numberOfLines={1}>
@@ -90,7 +89,9 @@ export default function HabitsScreen() {
               <Sprout color={accent} size={25} />
             </View>
             <Typography type="h2" className="text-foreground text-center text-xl font-bold">
-              Start with one small habit
+              {archivedHabits.length > 0
+                ? 'No active habits right now'
+                : 'Start with one small habit'}
             </Typography>
             <View className="mt-5 w-full">
               <AddHabitSheet />
@@ -101,7 +102,7 @@ export default function HabitsScreen() {
         {archivedHabits.length > 0 ? (
           <View className="mt-9 gap-3">
             <Typography type="h2" className="text-foreground text-lg font-bold">
-              Inactive
+              Archived
             </Typography>
             {archivedHabits.map(habitRow)}
           </View>

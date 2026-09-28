@@ -29,6 +29,7 @@ import { registerServiceWorker } from '@/lib/registerServiceWorker';
 import { reportErrorToParent } from '@/lib/reportPreviewError';
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { useBloomStore } from '@/lib/bloom/store';
+import { reconcileHabitNotifications } from '@/lib/bloom/notifications';
 
 /**
  * Custom ErrorBoundary that reports React render errors to the parent window (Bilt preview iframe)
@@ -55,11 +56,21 @@ function AppNavigator() {
   const segments = useSegments();
   const hydrationStatus = useBloomStore((state) => state.hydrationStatus);
   const onboardingCompleted = useBloomStore((state) => state.onboardingCompleted);
+  const habits = useBloomStore((state) => state.habits);
+  const notificationPreference = useBloomStore((state) => state.notificationPreference);
   const hydrate = useBloomStore((state) => state.hydrate);
 
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    if (hydrationStatus !== 'ready') {
+      return;
+    }
+
+    void reconcileHabitNotifications(habits, notificationPreference);
+  }, [habits, hydrationStatus, notificationPreference]);
 
   useEffect(() => {
     if (hydrationStatus !== 'ready') return;

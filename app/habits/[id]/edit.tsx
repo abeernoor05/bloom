@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
+import { Button, Typography } from 'heroui-native';
 import { View } from 'react-native';
 
 import { HabitForm } from '@/components/bloom/HabitForm';
@@ -19,7 +20,16 @@ export default function EditHabitScreen() {
   }, [habit]);
 
   if (!habit) {
-    return null;
+    return (
+      <SafeAreaView className="bg-background flex-1 items-center justify-center px-6">
+        <Typography type="h2" className="text-foreground mb-3 text-center font-bold">
+          This habit is no longer here
+        </Typography>
+        <Button onPress={() => goBackOrReplace('/habits')}>
+          <Button.Label>Back to habits</Button.Label>
+        </Button>
+      </SafeAreaView>
+    );
   }
 
   return (
