@@ -12,6 +12,10 @@ import { useBloomStore } from '@/lib/bloom/store';
 
 const percent = (value: number | undefined) => Math.round((value ?? 0) * 100);
 
+const CARD_FOREGROUND = '#FFF9EE';
+const BAR_FILL = '#C76D4B';
+const BAR_TRACK = 'rgba(255, 249, 238, 0.24)';
+
 interface WeekSummary {
   completed: number;
   label: string;
@@ -95,20 +99,26 @@ export default function ProgressScreen() {
               <View className="flex-row items-end justify-between gap-5">
                 <Typography
                   className="text-accent-foreground"
-                  style={{ fontFamily: 'Lora_400Regular', fontSize: 38, lineHeight: 46 }}
+                  style={{
+                    color: CARD_FOREGROUND,
+                    fontFamily: 'Lora_400Regular',
+                    fontSize: 38,
+                    lineHeight: 46,
+                  }}
                 >
                   {percent(fourWeekRate)}%
                 </Typography>
                 <Typography
                   type="body-xs"
                   className="text-accent-foreground mb-1 max-w-[152px] flex-1 text-right leading-4"
+                  style={{ color: CARD_FOREGROUND }}
                 >
                   of planned moments, {comparison}
                 </Typography>
               </View>
 
               <View className="mt-4 h-[120px] flex-row items-end justify-between">
-                {weeks.map((week, index) => {
+                {weeks.map((week) => {
                   const fillHeight = week.rate === undefined ? 6 : Math.max(10, percent(week.rate));
                   return (
                     <View
@@ -117,17 +127,23 @@ export default function ProgressScreen() {
                       accessible
                       accessibilityLabel={`${week.label}: ${percent(week.rate)}% complete`}
                     >
-                      <View className="bg-accent-foreground/20 h-24 w-[18px] justify-end overflow-hidden rounded-full">
+                      <View
+                        className="h-24 w-[18px] justify-end overflow-hidden rounded-full"
+                        style={{ backgroundColor: BAR_TRACK }}
+                      >
                         <View
-                          className={
-                            index === weeks.length - 1
-                              ? 'bg-accent-foreground w-full rounded-full'
-                              : 'bg-accent-foreground/70 w-full rounded-full'
-                          }
-                          style={{ height: Math.round((fillHeight / 100) * 96) }}
+                          className="w-full rounded-full"
+                          style={{
+                            backgroundColor: BAR_FILL,
+                            height: Math.round((fillHeight / 100) * 96),
+                          }}
                         />
                       </View>
-                      <Typography type="body-xs" className="text-accent-foreground mt-2">
+                      <Typography
+                        type="body-xs"
+                        className="text-accent-foreground mt-2"
+                        style={{ color: CARD_FOREGROUND }}
+                      >
                         {week.label}
                       </Typography>
                     </View>
