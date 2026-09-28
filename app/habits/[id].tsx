@@ -46,7 +46,12 @@ export default function HabitDetailsScreen() {
   const reflections = useBloomStore((state) => state.reflections);
   const adjustments = useBloomStore((state) => state.adjustments);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [accent, muted, foreground] = useThemeColor(['accent', 'muted', 'foreground']);
+  const [accent, muted, foreground, accentForeground] = useThemeColor([
+    'accent',
+    'muted',
+    'foreground',
+    'accent-foreground',
+  ]);
 
   if (!habit) {
     return (
@@ -92,7 +97,7 @@ export default function HabitDetailsScreen() {
           <View className="bg-background-tertiary mb-4 size-20 items-center justify-center rounded-full">
             <HabitIcon icon={habit.icon} color={accent} size={31} />
           </View>
-          <BloomHeading level="hero" className="text-center">
+          <BloomHeading level="section" className="text-center">
             {habit.name}
           </BloomHeading>
           {habit.description ? (
@@ -111,7 +116,11 @@ export default function HabitDetailsScreen() {
 
         <View className="mb-4 flex-row gap-3">
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-lg font-bold">
+            <Typography
+              type="h2"
+              className="text-foreground font-bold"
+              style={{ fontSize: 16, lineHeight: 20 }}
+            >
               {metrics.current}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
@@ -119,7 +128,11 @@ export default function HabitDetailsScreen() {
             </Typography>
           </Card>
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-lg font-bold">
+            <Typography
+              type="h2"
+              className="text-foreground font-bold"
+              style={{ fontSize: 16, lineHeight: 20 }}
+            >
               {metrics.best}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
@@ -127,7 +140,11 @@ export default function HabitDetailsScreen() {
             </Typography>
           </Card>
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-lg font-bold">
+            <Typography
+              type="h2"
+              className="text-foreground font-bold"
+              style={{ fontSize: 16, lineHeight: 20 }}
+            >
               {metrics.scheduledCount > 0 ? `${Math.round(metrics.completionRate * 100)}%` : '—'}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
@@ -138,7 +155,11 @@ export default function HabitDetailsScreen() {
 
         <View className="mb-4 flex-row gap-3">
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-lg font-bold">
+            <Typography
+              type="h2"
+              className="text-foreground font-bold"
+              style={{ fontSize: 16, lineHeight: 20 }}
+            >
               {metrics.completedCount}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
@@ -146,7 +167,11 @@ export default function HabitDetailsScreen() {
             </Typography>
           </Card>
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-lg font-bold">
+            <Typography
+              type="h2"
+              className="text-foreground font-bold"
+              style={{ fontSize: 16, lineHeight: 20 }}
+            >
               {adjustments.filter((adjustment) => adjustment.habitId === habit.id).length}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
@@ -156,7 +181,11 @@ export default function HabitDetailsScreen() {
         </View>
 
         <Card className="border-border mb-4 rounded-[22px] border p-5">
-          <Typography type="h2" className="text-foreground mb-4 text-lg font-bold">
+          <Typography
+            type="h2"
+            className="text-foreground mb-4 font-bold"
+            style={{ fontSize: 15, lineHeight: 20 }}
+          >
             Recent rhythm
           </Typography>
           <View className="flex-row flex-wrap gap-x-3 gap-y-4">
@@ -180,12 +209,9 @@ export default function HabitDetailsScreen() {
                       type="body-xs"
                       className={cn(
                         'font-semibold',
-                        complete
-                          ? 'text-accent-foreground'
-                          : scheduled
-                            ? 'text-accent'
-                            : 'text-muted',
+                        scheduled && !complete ? 'text-accent' : 'text-muted',
                       )}
+                      style={complete ? { color: accentForeground } : undefined}
                     >
                       {new Date(`${date}T12:00:00`).getDate()}
                     </Typography>
@@ -207,7 +233,11 @@ export default function HabitDetailsScreen() {
               <View className="bg-accent-soft size-9 items-center justify-center rounded-2xl">
                 <Lightbulb color={accent} size={18} />
               </View>
-              <Typography type="h2" className="text-foreground text-lg font-bold">
+              <Typography
+                type="h2"
+                className="text-foreground font-bold"
+                style={{ fontSize: 16, lineHeight: 20 }}
+              >
                 Insights
               </Typography>
             </View>
@@ -228,7 +258,11 @@ export default function HabitDetailsScreen() {
               <View className="bg-accent-soft size-9 items-center justify-center rounded-2xl">
                 <Lightbulb color={accent} size={18} />
               </View>
-              <Typography type="h2" className="text-foreground text-lg font-bold">
+              <Typography
+                type="h2"
+                className="text-foreground font-bold"
+                style={{ fontSize: 16, lineHeight: 20 }}
+              >
                 Insights
               </Typography>
             </View>
