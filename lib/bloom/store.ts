@@ -1,9 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
-import { createInitialBloomData, toLocalDateKey } from './sampleData';
+import { calculateHabitMetrics, toLocalDateKey, upsertCompletion } from './habitMetrics';
+import { createInitialBloomData } from './sampleData';
 import { HABIT_FREQUENCIES } from './types';
-import type { BloomData, Habit, NewHabitInput, OnboardingResult } from './types';
+import type {
+  BloomData,
+  Habit,
+  HabitFrequency,
+  HabitInput,
+  HabitScheduleType,
+  OnboardingResult,
+  Weekday,
+} from './types';
 
 const STORAGE_KEY = '@bloom/data/v1';
 
@@ -13,8 +22,12 @@ interface BloomStore extends BloomData {
   hydrationStatus: HydrationStatus;
   hydrate: () => Promise<void>;
   finishOnboarding: (result: OnboardingResult) => void;
+  setHabitCompletion: (habitId: string, date: string, completed: boolean) => void;
   toggleHabitForToday: (habitId: string) => void;
-  addHabit: (input: NewHabitInput) => void;
+  addHabit: (input: HabitInput) => string;
+  updateHabit: (habitId: string, input: HabitInput) => void;
+  setHabitArchived: (habitId: string, archived: boolean) => void;
+  deleteHabit: (habitId: string) => void;
 }
 
 function persist(data: BloomData) {
@@ -48,6 +61,73 @@ function nextId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizedFrequency(frequency: Partial<HabitFrequency> | undefined): HabitFrequency {
+  const id = frequency?.id ?? 'daily';
+  const daysPerWeek = Math.max(
+    1,
+    Math.min(
+      7,
+      frequency?.daysPerWeek ??
+        HABIT_FREQUENCIES.find((candidate) => candidate.id === id)?.daysPerWeek ??
+        7,
+    ),
+  );
+  const weekdays = Array.isArray(frequency?.scheduledWeekdays)
+    ? [...new Set(frequency.scheduledWeekdays)].filter(
+        (day): day is Weekday => Number.isInteger(day) && day >= 0 && day <= 6,
+      )
+    : undefined;
+  const scheduleType: HabitScheduleType =
+    frequency?.scheduleType ??
+    (id === 'daily' ? 'daily' : weekdays?.length ? 'specific-days' : 'weekly-target');
+
+  return {
+    id,
+    scheduleType,
+    daysPerWeek: scheduleType === 'daily' ? 7 : daysPerWeek,
+    scheduledWeekdays: scheduleType === 'specific-days' ? weekdays : undefined,
+  };
+}
+
+function withCalculatedStreak(habit: Habit): Habit {
+  const metrics = calculateHabitMetrics(habit);
+  return {
+    ...habit,
+    streak: {
+      current: metrics.current,
+      best: metrics.best,
+      lastCompletedDate: metrics.lastCompletedDate,
+    },
+  };
+}
+
+function normalizeHabit(habit: Habit): Habit {
+  const normalized: Habit = {
+    ...habit,
+    frequency: normalizedFrequency(habit.frequency),
+    reminder: {
+      enabled: habit.reminder?.enabled ?? true,
+      time: habit.reminder?.time || '8:00 AM',
+      timezone: habit.reminder?.timezone,
+    },
+    completions: (habit.completions ?? []).map((completion) => ({
+      ...completion,
+      habitId: completion.habitId ?? habit.id,
+    })),
+    streak: habit.streak ?? { current: 0, best: 0 },
+  };
+  return withCalculatedStreak(normalized);
+}
+
+function frequencyFromInput(input: HabitInput): HabitFrequency {
+  return normalizedFrequency({
+    id: input.frequencyId,
+    scheduleType: input.scheduleType,
+    daysPerWeek: input.daysPerWeek,
+    scheduledWeekdays: input.scheduledWeekdays,
+  });
+}
+
 export const useBloomStore = create<BloomStore>((set, get) => ({
   ...createInitialBloomData(),
   hydrationStatus: 'idle',
@@ -61,7 +141,9 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
       if (stored) {
         const data: unknown = JSON.parse(stored);
         if (isBloomData(data)) {
-          set({ ...data, hydrationStatus: 'ready' });
+          const normalized = { ...data, habits: data.habits.map(normalizeHabit) };
+          set({ ...normalized, hydrationStatus: 'ready' });
+          persist(normalized);
           return;
         }
       }
@@ -69,20 +151,23 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
       console.error('Could not load Bloom data', error);
     }
 
-    set({ hydrationStatus: 'ready' });
+    set({ habits: get().habits.map(normalizeHabit), hydrationStatus: 'ready' });
   },
 
   finishOnboarding: (result) => {
     const frequency = HABIT_FREQUENCIES.find((item) => item.id === result.frequencyId);
     const goalId = nextId('goal');
-    const habits = get().habits.map((habit) => ({
-      ...habit,
-      goalId,
-      frequency: {
-        id: result.frequencyId,
-        daysPerWeek: frequency?.daysPerWeek ?? 7,
-      },
-    }));
+    const habits = get().habits.map((habit) =>
+      withCalculatedStreak({
+        ...habit,
+        goalId,
+        frequency: normalizedFrequency({
+          id: result.frequencyId,
+          scheduleType: result.frequencyId === 'daily' ? 'daily' : 'weekly-target',
+          daysPerWeek: frequency?.daysPerWeek ?? 7,
+        }),
+      }),
+    );
 
     set({
       onboardingCompleted: true,
@@ -98,57 +183,90 @@ export const useBloomStore = create<BloomStore>((set, get) => ({
     persist(selectData(get()));
   },
 
-  toggleHabitForToday: (habitId) => {
-    const today = toLocalDateKey();
-    const now = new Date().toISOString();
-
+  setHabitCompletion: (habitId, date, completed) => {
     set((state) => ({
       habits: state.habits.map((habit) => {
         if (habit.id !== habitId) return habit;
-        const isComplete = habit.completions.some(
-          (completion) => completion.date === today && completion.status === 'completed',
-        );
-        const completions = isComplete
-          ? habit.completions.filter((completion) => completion.date !== today)
-          : [
-              { date: today, status: 'completed' as const, completedAt: now },
-              ...habit.completions.filter((completion) => completion.date !== today),
-            ];
-        const current = Math.max(0, habit.streak.current + (isComplete ? -1 : 1));
-
-        return {
+        const updated = {
           ...habit,
-          completions,
-          streak: {
-            current,
-            best: Math.max(habit.streak.best, current),
-            lastCompletedDate: completions.find((completion) => completion.status === 'completed')
-              ?.date,
-          },
+          completions: upsertCompletion(habit.completions, habit.id, date, completed),
+          updatedAt: new Date().toISOString(),
         };
+        return withCalculatedStreak(updated);
       }),
     }));
     persist(selectData(get()));
   },
 
+  toggleHabitForToday: (habitId) => {
+    const habit = get().habits.find((candidate) => candidate.id === habitId);
+    if (!habit) return;
+    const today = toLocalDateKey();
+    const completed = habit.completions.some(
+      (completion) => completion.date === today && completion.status === 'completed',
+    );
+    get().setHabitCompletion(habitId, today, !completed);
+  },
+
   addHabit: (input) => {
-    const frequency = HABIT_FREQUENCIES.find((item) => item.id === input.frequencyId);
-    const habit: Habit = {
-      id: nextId('habit'),
+    const id = nextId('habit');
+    const now = new Date().toISOString();
+    const habit = withCalculatedStreak({
+      id,
       goalId: get().goal?.id,
       name: input.name.trim(),
       icon: input.icon,
-      frequency: {
-        id: input.frequencyId,
-        daysPerWeek: frequency?.daysPerWeek ?? 7,
-      },
-      reminder: { enabled: true, time: input.reminderTime.trim() },
+      description: input.description?.trim() || undefined,
+      target: input.target,
+      frequency: frequencyFromInput(input),
+      reminder: { enabled: input.reminderEnabled, time: input.reminderTime.trim() },
       completions: [],
       streak: { current: 0, best: 0 },
-      createdAt: new Date().toISOString(),
-    };
+      createdAt: now,
+      updatedAt: now,
+    });
 
     set((state) => ({ habits: [...state.habits, habit] }));
+    persist(selectData(get()));
+    return id;
+  },
+
+  updateHabit: (habitId, input) => {
+    set((state) => ({
+      habits: state.habits.map((habit) => {
+        if (habit.id !== habitId) return habit;
+        return withCalculatedStreak({
+          ...habit,
+          name: input.name.trim(),
+          icon: input.icon,
+          description: input.description?.trim() || undefined,
+          target: input.target,
+          frequency: frequencyFromInput(input),
+          reminder: { enabled: input.reminderEnabled, time: input.reminderTime.trim() },
+          updatedAt: new Date().toISOString(),
+        });
+      }),
+    }));
+    persist(selectData(get()));
+  },
+
+  setHabitArchived: (habitId, archived) => {
+    set((state) => ({
+      habits: state.habits.map((habit) =>
+        habit.id === habitId
+          ? withCalculatedStreak({
+              ...habit,
+              archivedAt: archived ? new Date().toISOString() : undefined,
+              updatedAt: new Date().toISOString(),
+            })
+          : habit,
+      ),
+    }));
+    persist(selectData(get()));
+  },
+
+  deleteHabit: (habitId) => {
+    set((state) => ({ habits: state.habits.filter((habit) => habit.id !== habitId) }));
     persist(selectData(get()));
   },
 }));

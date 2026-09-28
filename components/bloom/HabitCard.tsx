@@ -8,34 +8,27 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { BookOpen, Check, Droplets, Flame, Footprints, Sparkles } from 'lucide-react-native';
+import { Check, ChevronRight, Flame } from 'lucide-react-native';
 import { Card, Typography, useThemeColor } from 'heroui-native';
 
+import { HABIT_ICONS } from '@/components/bloom/habitVisuals';
 import type { Habit } from '@/lib/bloom/types';
 import { cn } from '@/lib/utils';
-
-const ICONS = {
-  book: BookOpen,
-  walk: Footprints,
-  water: Droplets,
-  sparkles: Sparkles,
-} as const;
 
 interface HabitCardProps {
   habit: Habit;
   isComplete: boolean;
   onToggle: () => void;
+  onPress?: () => void;
 }
 
-export function HabitCard({ habit, isComplete, onToggle }: HabitCardProps) {
+export function HabitCard({ habit, isComplete, onToggle, onPress }: HabitCardProps) {
   const scale = useSharedValue(1);
   const [accent, muted] = useThemeColor(['accent', 'muted']);
-  const Icon = ICONS[habit.icon];
+  const Icon = HABIT_ICONS[habit.icon];
 
   useEffect(() => {
-    if (isComplete) {
-      scale.set(withSequence(withSpring(1.018), withSpring(1)));
-    }
+    if (isComplete) scale.set(withSequence(withSpring(1.018), withSpring(1)));
   }, [isComplete, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -56,37 +49,47 @@ export function HabitCard({ habit, isComplete, onToggle }: HabitCardProps) {
         )}
       >
         <View className="min-h-24 flex-row items-center px-4 py-4">
-          <View
-            className={cn(
-              'mr-4 size-12 items-center justify-center rounded-2xl',
-              isComplete ? 'bg-accent/15' : 'bg-background-secondary',
-            )}
+          <Pressable
+            onPress={onPress}
+            disabled={!onPress}
+            accessibilityRole={onPress ? 'button' : undefined}
+            accessibilityLabel={onPress ? `View ${habit.name}` : undefined}
+            className="min-w-0 flex-1 flex-row items-center"
           >
-            <Icon color={isComplete ? accent : muted} size={22} strokeWidth={2.2} />
-          </View>
-
-          <View className="min-w-0 flex-1 gap-1.5">
-            <Typography
-              type="body"
+            <View
               className={cn(
-                'text-foreground font-semibold',
-                isComplete && 'text-accent-soft-foreground',
+                'mr-4 size-12 items-center justify-center rounded-2xl',
+                isComplete ? 'bg-accent/15' : 'bg-background-secondary',
               )}
             >
-              {habit.name}
-            </Typography>
-            <View className="flex-row flex-wrap items-center gap-x-3 gap-y-1">
-              <Typography type="body-xs" className="text-muted">
-                {habit.reminder.time}
+              <Icon color={isComplete ? accent : muted} size={22} strokeWidth={2.2} />
+            </View>
+
+            <View className="min-w-0 flex-1 gap-1.5">
+              <Typography
+                type="body"
+                className={cn(
+                  'text-foreground font-semibold',
+                  isComplete && 'text-accent-soft-foreground',
+                )}
+                numberOfLines={1}
+              >
+                {habit.name}
               </Typography>
-              <View className="flex-row items-center gap-1">
-                <Flame color={muted} size={14} />
+              <View className="flex-row flex-wrap items-center gap-x-3 gap-y-1">
                 <Typography type="body-xs" className="text-muted">
-                  {habit.streak.current} day streak
+                  {habit.reminder.enabled ? habit.reminder.time : 'No reminder'}
                 </Typography>
+                <View className="flex-row items-center gap-1">
+                  <Flame color={muted} size={14} />
+                  <Typography type="body-xs" className="text-muted">
+                    {habit.streak.current} streak
+                  </Typography>
+                </View>
               </View>
             </View>
-          </View>
+            {onPress ? <ChevronRight color={muted} size={18} /> : null}
+          </Pressable>
 
           <Pressable
             onPress={handleToggle}
@@ -99,11 +102,11 @@ export function HabitCard({ habit, isComplete, onToggle }: HabitCardProps) {
               isComplete ? 'border-accent bg-accent' : 'border-border bg-background',
             )}
           >
-            {isComplete && (
+            {isComplete ? (
               <Animated.View entering={FadeIn.duration(180)}>
                 <Check color="#FFFFFF" size={22} strokeWidth={3} />
               </Animated.View>
-            )}
+            ) : null}
           </Pressable>
         </View>
       </Card>

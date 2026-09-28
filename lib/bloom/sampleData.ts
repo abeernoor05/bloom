@@ -1,11 +1,7 @@
+import { toLocalDateKey } from './habitMetrics';
 import type { BloomData, Habit } from './types';
 
-export function toLocalDateKey(date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+export { toLocalDateKey } from './habitMetrics';
 
 function dateKeyDaysAgo(days: number): string {
   const date = new Date();
@@ -25,6 +21,7 @@ function sampleHabit(
   const completions = Array.from(
     { length: Math.max(0, currentStreak - (completedToday ? 1 : 0)) },
     (_, index) => ({
+      habitId: id,
       date: dateKeyDaysAgo(index + 1),
       status: 'completed' as const,
       completedAt: new Date(Date.now() - (index + 1) * 86_400_000).toISOString(),
@@ -33,6 +30,7 @@ function sampleHabit(
 
   if (completedToday) {
     completions.unshift({
+      habitId: id,
       date: toLocalDateKey(),
       status: 'completed',
       completedAt: now,
@@ -43,7 +41,7 @@ function sampleHabit(
     id,
     name,
     icon,
-    frequency: { id: 'daily', daysPerWeek: 7 },
+    frequency: { id: 'daily', scheduleType: 'daily', daysPerWeek: 7 },
     reminder: { enabled: true, time: reminderTime },
     completions,
     streak: {
@@ -51,7 +49,7 @@ function sampleHabit(
       best: currentStreak,
       lastCompletedDate: completions[0]?.date,
     },
-    createdAt: now,
+    createdAt: new Date(Date.now() - Math.max(currentStreak, 7) * 86_400_000).toISOString(),
   };
 }
 

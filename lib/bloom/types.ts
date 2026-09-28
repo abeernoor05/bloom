@@ -17,7 +17,9 @@ export const HABIT_FREQUENCIES = [
 ] as const;
 
 export type HabitFrequencyId = (typeof HABIT_FREQUENCIES)[number]['id'];
+export type HabitScheduleType = 'daily' | 'specific-days' | 'weekly-target';
 export type HabitIcon = 'book' | 'walk' | 'water' | 'sparkles';
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface Goal {
   id: string;
@@ -29,8 +31,9 @@ export interface Goal {
 
 export interface HabitFrequency {
   id: HabitFrequencyId;
+  scheduleType: HabitScheduleType;
   daysPerWeek: number;
-  scheduledWeekdays?: number[];
+  scheduledWeekdays?: Weekday[];
 }
 
 export interface HabitReminder {
@@ -40,6 +43,7 @@ export interface HabitReminder {
 }
 
 export interface HabitCompletion {
+  habitId: string;
   date: string;
   status: 'completed' | 'skipped';
   completedAt?: string;
@@ -52,16 +56,24 @@ export interface HabitStreak {
   lastCompletedDate?: string;
 }
 
+export interface HabitTarget {
+  value: number;
+  unit: string;
+}
+
 export interface Habit {
   id: string;
   goalId?: string;
   name: string;
   icon: HabitIcon;
+  description?: string;
+  target?: HabitTarget;
   frequency: HabitFrequency;
   reminder: HabitReminder;
   completions: HabitCompletion[];
   streak: HabitStreak;
   createdAt: string;
+  updatedAt?: string;
   archivedAt?: string;
 }
 
@@ -78,9 +90,17 @@ export interface OnboardingResult {
   frequencyId: HabitFrequencyId;
 }
 
-export interface NewHabitInput {
+export interface HabitInput {
   name: string;
   icon: HabitIcon;
+  description?: string;
+  reminderEnabled: boolean;
   reminderTime: string;
   frequencyId: HabitFrequencyId;
+  scheduleType: HabitScheduleType;
+  daysPerWeek: number;
+  scheduledWeekdays?: Weekday[];
+  target?: HabitTarget;
 }
+
+export type NewHabitInput = HabitInput;

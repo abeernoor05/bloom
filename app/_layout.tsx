@@ -78,6 +78,9 @@ function AppNavigator() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="habits/new" />
+      <Stack.Screen name="habits/[id]" />
+      <Stack.Screen name="habits/[id]/edit" />
     </Stack>
   );
 }

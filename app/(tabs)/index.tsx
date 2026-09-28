@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Leaf } from 'lucide-react-native';
@@ -6,7 +7,11 @@ import { Typography, useThemeColor } from 'heroui-native';
 import { AddHabitSheet } from '@/components/bloom/AddHabitSheet';
 import { HabitCard } from '@/components/bloom/HabitCard';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
-import { toLocalDateKey } from '@/lib/bloom/sampleData';
+import {
+  isHabitCompleteOnDate,
+  isHabitScheduledOnDate,
+  toLocalDateKey,
+} from '@/lib/bloom/habitMetrics';
 import { useBloomStore } from '@/lib/bloom/store';
 
 function greeting(): string {
@@ -22,12 +27,11 @@ export default function TodayScreen() {
   const toggleHabit = useBloomStore((state) => state.toggleHabitForToday);
   const [accent] = useThemeColor(['accent']);
   const today = toLocalDateKey();
-  const completedCount = habits.filter((habit) =>
-    habit.completions.some(
-      (completion) => completion.date === today && completion.status === 'completed',
-    ),
-  ).length;
-  const progress = habits.length === 0 ? 0 : completedCount / habits.length;
+  const todaysHabits = habits.filter(
+    (habit) => !habit.archivedAt && isHabitScheduledOnDate(habit, today),
+  );
+  const completedCount = todaysHabits.filter((habit) => isHabitCompleteOnDate(habit, today)).length;
+  const progress = todaysHabits.length === 0 ? 0 : completedCount / todaysHabits.length;
 
   return (
     <SafeAreaView className="bg-background flex-1" edges={['top']}>
@@ -62,7 +66,7 @@ export default function TodayScreen() {
                 TODAY&apos;S PROGRESS
               </Typography>
               <Typography type="h2" className="text-background text-2xl font-bold">
-                {completedCount} of {habits.length} completed
+                {completedCount} of {todaysHabits.length} completed
               </Typography>
             </View>
             <Typography type="body" className="text-background font-bold">
@@ -76,9 +80,11 @@ export default function TodayScreen() {
             />
           </View>
           <Typography type="body-xs" className="text-background/70 mt-4">
-            {completedCount === habits.length && habits.length > 0
+            {completedCount === todaysHabits.length && todaysHabits.length > 0
               ? 'You showed up for yourself today.'
-              : 'Steady beats perfect. Keep going at your pace.'}
+              : todaysHabits.length === 0
+                ? 'A lighter day can be part of a steady rhythm.'
+                : 'Steady beats perfect. Keep going at your pace.'}
           </Typography>
         </View>
 
@@ -87,25 +93,21 @@ export default function TodayScreen() {
             Your habits
           </Typography>
           <Typography type="body-xs" className="text-muted">
-            {habits.length} today
+            {todaysHabits.length} today
           </Typography>
         </View>
 
         <View className="gap-3">
-          {habits.map((habit, index) => {
-            const isComplete = habit.completions.some(
-              (completion) => completion.date === today && completion.status === 'completed',
-            );
-            return (
-              <Animated.View key={habit.id} entering={FadeInDown.delay(index * 60).duration(280)}>
-                <HabitCard
-                  habit={habit}
-                  isComplete={isComplete}
-                  onToggle={() => toggleHabit(habit.id)}
-                />
-              </Animated.View>
-            );
-          })}
+          {todaysHabits.map((habit, index) => (
+            <Animated.View key={habit.id} entering={FadeInDown.delay(index * 60).duration(280)}>
+              <HabitCard
+                habit={habit}
+                isComplete={isHabitCompleteOnDate(habit, today)}
+                onToggle={() => toggleHabit(habit.id)}
+                onPress={() => router.push({ pathname: '/habits/[id]', params: { id: habit.id } })}
+              />
+            </Animated.View>
+          ))}
         </View>
 
         <View className="mt-5">
