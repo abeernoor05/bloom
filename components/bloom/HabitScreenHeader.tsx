@@ -9,7 +9,7 @@ interface HabitScreenHeaderProps {
 }
 
 export function HabitScreenHeader({ title, onBack, action }: HabitScreenHeaderProps) {
-  const [foreground] = useThemeColor(['foreground']);
+  const [accent] = useThemeColor(['accent']);
   return (
     <View className="mb-7 flex-row items-center gap-3">
       <Pressable
@@ -17,14 +17,14 @@ export function HabitScreenHeader({ title, onBack, action }: HabitScreenHeaderPr
         accessibilityRole="button"
         accessibilityLabel="Go back"
         hitSlop={8}
-        className="border-border bg-surface size-11 items-center justify-center rounded-full border"
+        className="bg-surface size-11 items-center justify-center rounded-full active:opacity-70"
       >
-        <ArrowLeft color={foreground} size={21} />
+        <ArrowLeft color={accent} size={20} strokeWidth={1.8} />
       </Pressable>
-      <Typography type="h1" className="text-foreground min-w-0 flex-1 text-2xl font-bold">
+      <Typography type="body-sm" className="text-muted min-w-0 flex-1 text-center font-medium">
         {title}
       </Typography>
-      {action}
+      {action ?? <View className="size-11" />}
     </View>
   );
 }

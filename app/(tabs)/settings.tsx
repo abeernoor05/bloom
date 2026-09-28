@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import { Bell, Clock3, Info, ShieldCheck } from 'lucide-react-native';
 import { Button, Card, Input, TextField, Typography, useThemeColor } from 'heroui-native';
 
+import { BloomHeading } from '@/components/bloom/BloomHeading';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 import {
   getNotificationAvailability,
@@ -80,15 +81,14 @@ export default function SettingsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerClassName="mx-auto w-full max-w-2xl gap-6 px-5 pb-12 pt-8"
         >
-          <Typography type="h1" className="text-foreground text-3xl font-bold">
-            Settings
+          <Typography type="body-sm" className="text-muted mb-1">
+            Make Bloom yours
           </Typography>
+          <BloomHeading level="hero">Settings</BloomHeading>
 
           <View className="gap-3">
-            <Typography type="h3" className="text-foreground text-lg font-semibold">
-              Notifications
-            </Typography>
-            <Card className="border-border gap-5 rounded-3xl border p-5">
+            <BloomHeading level="section">Notifications</BloomHeading>
+            <Card className="border-border bg-surface gap-5 rounded-[22px] border p-5">
               <View className="flex-row items-center gap-4">
                 <View className="bg-accent-soft size-11 items-center justify-center rounded-2xl">
                   <Bell color={accent} size={20} />
@@ -183,10 +183,8 @@ export default function SettingsScreen() {
           </View>
 
           <View className="gap-3">
-            <Typography type="h3" className="text-foreground text-lg font-semibold">
-              About
-            </Typography>
-            <Card className="border-border overflow-hidden rounded-3xl border p-0">
+            <BloomHeading level="section">About</BloomHeading>
+            <Card className="border-border bg-surface overflow-hidden rounded-[22px] border p-0">
               <View className="min-h-20 flex-row items-center px-5">
                 <ShieldCheck color={muted} size={21} />
                 <View className="ml-4 flex-1 gap-1">

@@ -12,6 +12,7 @@ import {
 import { Pressable, ScrollView, View } from 'react-native';
 import { Button, Card, Dialog, Typography, useThemeColor } from 'heroui-native';
 
+import { BloomHeading } from '@/components/bloom/BloomHeading';
 import { HabitScreenHeader } from '@/components/bloom/HabitScreenHeader';
 import { HabitIcon } from '@/components/bloom/habitVisuals';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
@@ -88,12 +89,12 @@ export default function HabitDetailsScreen() {
         />
 
         <View className="mb-7 items-center">
-          <View className="bg-accent-soft mb-4 size-16 items-center justify-center rounded-3xl">
-            <HabitIcon icon={habit.icon} color={accent} size={29} />
+          <View className="bg-background-tertiary mb-4 size-20 items-center justify-center rounded-full">
+            <HabitIcon icon={habit.icon} color={accent} size={31} />
           </View>
-          <Typography type="h1" className="text-foreground text-center text-3xl font-bold">
+          <BloomHeading level="hero" className="text-center">
             {habit.name}
-          </Typography>
+          </BloomHeading>
           {habit.description ? (
             <Typography type="body" className="text-muted mt-2 text-center">
               {habit.description}
@@ -109,7 +110,7 @@ export default function HabitDetailsScreen() {
         </View>
 
         <View className="mb-4 flex-row gap-3">
-          <Card className="border-border flex-1 rounded-3xl border p-4">
+          <Card className="border-border flex-1 rounded-[22px] border p-4">
             <Typography type="h2" className="text-foreground text-2xl font-bold">
               {metrics.current}
             </Typography>
@@ -117,7 +118,7 @@ export default function HabitDetailsScreen() {
               Current streak
             </Typography>
           </Card>
-          <Card className="border-border flex-1 rounded-3xl border p-4">
+          <Card className="border-border flex-1 rounded-[22px] border p-4">
             <Typography type="h2" className="text-foreground text-2xl font-bold">
               {metrics.best}
             </Typography>
@@ -125,7 +126,7 @@ export default function HabitDetailsScreen() {
               Longest streak
             </Typography>
           </Card>
-          <Card className="border-border flex-1 rounded-3xl border p-4">
+          <Card className="border-border flex-1 rounded-[22px] border p-4">
             <Typography type="h2" className="text-foreground text-2xl font-bold">
               {metrics.scheduledCount > 0 ? `${Math.round(metrics.completionRate * 100)}%` : '—'}
             </Typography>
@@ -136,7 +137,7 @@ export default function HabitDetailsScreen() {
         </View>
 
         <View className="mb-4 flex-row gap-3">
-          <Card className="border-border flex-1 rounded-3xl border p-4">
+          <Card className="border-border flex-1 rounded-[22px] border p-4">
             <Typography type="h2" className="text-foreground text-2xl font-bold">
               {metrics.completedCount}
             </Typography>
@@ -144,7 +145,7 @@ export default function HabitDetailsScreen() {
               Completed occurrences
             </Typography>
           </Card>
-          <Card className="border-border flex-1 rounded-3xl border p-4">
+          <Card className="border-border flex-1 rounded-[22px] border p-4">
             <Typography type="h2" className="text-foreground text-2xl font-bold">
               {adjustments.filter((adjustment) => adjustment.habitId === habit.id).length}
             </Typography>
@@ -154,7 +155,7 @@ export default function HabitDetailsScreen() {
           </Card>
         </View>
 
-        <Card className="border-border mb-4 rounded-3xl border p-5">
+        <Card className="border-border mb-4 rounded-[22px] border p-5">
           <Typography type="h2" className="text-foreground mb-4 text-lg font-bold">
             Recent rhythm
           </Typography>
@@ -197,7 +198,7 @@ export default function HabitDetailsScreen() {
         </Card>
 
         {insights.length > 0 ? (
-          <Card className="border-border mb-4 rounded-3xl border p-5">
+          <Card className="border-border mb-4 rounded-[22px] border p-5">
             <View className="mb-4 flex-row items-center gap-3">
               <View className="bg-accent-soft size-9 items-center justify-center rounded-2xl">
                 <Lightbulb color={accent} size={18} />
@@ -218,7 +219,7 @@ export default function HabitDetailsScreen() {
             </View>
           </Card>
         ) : (
-          <Card className="border-border mb-4 rounded-3xl border p-5">
+          <Card className="border-border mb-4 rounded-[22px] border p-5">
             <View className="mb-3 flex-row items-center gap-3">
               <View className="bg-accent-soft size-9 items-center justify-center rounded-2xl">
                 <Lightbulb color={accent} size={18} />
@@ -233,7 +234,7 @@ export default function HabitDetailsScreen() {
           </Card>
         )}
 
-        <Card className="border-border mb-7 rounded-3xl border p-5">
+        <Card className="border-border mb-7 rounded-[22px] border p-5">
           <View className="mb-4 flex-row items-center gap-3">
             <CalendarDays color={muted} size={19} />
             <View className="flex-1">

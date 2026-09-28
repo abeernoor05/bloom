@@ -1,110 +1,131 @@
+import { useMemo, useState } from 'react';
 import { router } from 'expo-router';
-import { Check, ChevronRight, Flame, Sprout } from 'lucide-react-native';
+import { Button, Card, Chip, Typography, useThemeColor } from 'heroui-native';
+import { Archive, ChevronRight, Plus, RotateCcw } from 'lucide-react-native';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Card, Typography, useThemeColor } from 'heroui-native';
-
-import { AddHabitSheet } from '@/components/bloom/AddHabitSheet';
-import { HabitIcon } from '@/components/bloom/habitVisuals';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
-import {
-  calculateHabitMetrics,
-  formatFrequency,
-  isHabitCompleteOnDate,
-  toLocalDateKey,
-} from '@/lib/bloom/habitMetrics';
+
+import { BloomHeading } from '@/components/bloom/BloomHeading';
+import { HabitIcon } from '@/components/bloom/habitVisuals';
+import { formatFrequency } from '@/lib/bloom/habitMetrics';
 import { useBloomStore } from '@/lib/bloom/store';
 
 export default function HabitsScreen() {
   const habits = useBloomStore((state) => state.habits);
+  const setHabitArchived = useBloomStore((state) => state.setHabitArchived);
+  const [showArchived, setShowArchived] = useState(false);
   const [accent, muted] = useThemeColor(['accent', 'muted']);
-  const today = toLocalDateKey();
-  const activeHabits = habits.filter((habit) => !habit.archivedAt);
-  const archivedHabits = habits.filter((habit) => habit.archivedAt);
-
-  const habitRow = (habit: (typeof habits)[number]) => {
-    const metrics = calculateHabitMetrics(habit);
-    const complete = isHabitCompleteOnDate(habit, today);
-    return (
-      <Pressable
-        key={habit.id}
-        onPress={() => router.push({ pathname: '/habits/[id]', params: { id: habit.id } })}
-        accessibilityRole="button"
-        accessibilityLabel={`View ${habit.name}`}
-      >
-        <Card className="border-border rounded-3xl border p-5">
-          <View className="flex-row items-center">
-            <View className="bg-accent-soft mr-4 size-12 items-center justify-center rounded-2xl">
-              <HabitIcon icon={habit.icon} color={accent} size={21} />
-            </View>
-            <View className="min-w-0 flex-1 gap-1">
-              <Typography type="body" className="text-foreground font-semibold" numberOfLines={1}>
-                {habit.name}
-              </Typography>
-              <Typography type="body-xs" className="text-muted" numberOfLines={1}>
-                {formatFrequency(habit)} ·{' '}
-                {habit.reminder.enabled ? habit.reminder.time : 'No reminder'}
-              </Typography>
-              <View className="mt-1 flex-row items-center gap-3">
-                <View className="flex-row items-center gap-1">
-                  <Flame color={muted} size={13} />
-                  <Typography type="body-xs" className="text-muted">
-                    {metrics.current} streak
-                  </Typography>
-                </View>
-                {complete ? (
-                  <View className="flex-row items-center gap-1">
-                    <Check color={accent} size={13} />
-                    <Typography type="body-xs" className="text-accent font-semibold">
-                      Done today
-                    </Typography>
-                  </View>
-                ) : null}
-              </View>
-            </View>
-            <ChevronRight color={muted} size={19} />
-          </View>
-        </Card>
-      </Pressable>
-    );
-  };
+  const activeHabits = useMemo(() => habits.filter((habit) => !habit.archivedAt), [habits]);
+  const archivedHabits = useMemo(
+    () => habits.filter((habit) => Boolean(habit.archivedAt)),
+    [habits],
+  );
 
   return (
     <SafeAreaView className="bg-background flex-1" edges={['top']}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerClassName="mx-auto w-full max-w-2xl px-5 pb-28 pt-8"
-      >
-        <View className="mb-7 flex-row items-center justify-between gap-4">
-          <Typography type="h1" className="text-foreground text-3xl font-bold">
-            Habits
-          </Typography>
-          <AddHabitSheet />
+      <ScrollView contentContainerClassName="px-5 pb-32 pt-7" showsVerticalScrollIndicator={false}>
+        <View className="mb-7 flex-row items-end justify-between gap-4">
+          <View>
+            <Typography type="body-sm" className="text-muted mb-1">
+              Your growing collection
+            </Typography>
+            <BloomHeading level="hero">My habits</BloomHeading>
+          </View>
+          <Button
+            isIconOnly
+            accessibilityLabel="Add habit"
+            onPress={() => router.push('/habits/new')}
+          >
+            <Plus size={20} />
+          </Button>
         </View>
 
-        {activeHabits.length > 0 ? (
-          <View className="gap-3">{activeHabits.map(habitRow)}</View>
-        ) : (
-          <Card className="border-border items-center rounded-3xl border p-7">
-            <View className="bg-accent-soft mb-4 size-14 items-center justify-center rounded-3xl">
-              <Sprout color={accent} size={25} />
-            </View>
-            <Typography type="h2" className="text-foreground text-center text-xl font-bold">
-              {archivedHabits.length > 0
-                ? 'No active habits right now'
-                : 'Start with one small habit'}
+        <View className="gap-3">
+          {activeHabits.map((habit) => (
+            <Pressable
+              key={habit.id}
+              onPress={() => router.push({ pathname: '/habits/[id]', params: { id: habit.id } })}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${habit.name}`}
+            >
+              <Card className="border-border bg-surface min-h-24 flex-row items-center rounded-[22px] border p-4">
+                <View className="bg-background-tertiary mr-4 size-12 items-center justify-center rounded-full">
+                  <HabitIcon icon={habit.icon} color={accent} size={21} />
+                </View>
+                <View className="min-w-0 flex-1 gap-2">
+                  <Typography type="body" className="text-foreground font-medium">
+                    {habit.name}
+                  </Typography>
+                  <View className="flex-row flex-wrap gap-2">
+                    <Chip size="sm" variant="secondary">
+                      <Chip.Label>{formatFrequency(habit)}</Chip.Label>
+                    </Chip>
+                    {habit.reminder.enabled ? (
+                      <Chip size="sm" variant="secondary">
+                        <Chip.Label>{habit.reminder.time}</Chip.Label>
+                      </Chip>
+                    ) : null}
+                  </View>
+                </View>
+                <ChevronRight color={muted} size={19} />
+              </Card>
+            </Pressable>
+          ))}
+        </View>
+
+        {activeHabits.length === 0 ? (
+          <Card className="border-border bg-surface rounded-[22px] border p-6">
+            <BloomHeading level="section">Plant your first habit</BloomHeading>
+            <Typography type="body-sm" className="text-muted mt-2 leading-5">
+              Start with something small enough to feel kind.
             </Typography>
-            <View className="mt-5 w-full">
-              <AddHabitSheet />
-            </View>
+            <Button className="mt-5" onPress={() => router.push('/habits/new')}>
+              <Button.Label>Create a habit</Button.Label>
+            </Button>
           </Card>
-        )}
+        ) : null}
 
         {archivedHabits.length > 0 ? (
-          <View className="mt-9 gap-3">
-            <Typography type="h2" className="text-foreground text-lg font-bold">
-              Archived
-            </Typography>
-            {archivedHabits.map(habitRow)}
+          <View className="mt-9">
+            <Button
+              variant="ghost"
+              className="self-start"
+              onPress={() => setShowArchived((value) => !value)}
+            >
+              <Archive size={16} />
+              <Button.Label>
+                {showArchived ? 'Hide archived' : `Archived (${archivedHabits.length})`}
+              </Button.Label>
+            </Button>
+            {showArchived ? (
+              <View className="mt-3 gap-3">
+                {archivedHabits.map((habit) => (
+                  <Card
+                    key={habit.id}
+                    className="border-border bg-surface rounded-[20px] border p-4"
+                  >
+                    <View className="flex-row items-center">
+                      <View className="flex-1">
+                        <Typography type="body-sm" className="text-foreground font-medium">
+                          {habit.name}
+                        </Typography>
+                        <Typography type="body-xs" className="text-muted mt-1">
+                          Archived
+                        </Typography>
+                      </View>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onPress={() => setHabitArchived(habit.id, false)}
+                      >
+                        <RotateCcw size={15} />
+                        <Button.Label>Restore</Button.Label>
+                      </Button>
+                    </View>
+                  </Card>
+                ))}
+              </View>
+            ) : null}
           </View>
         ) : null}
       </ScrollView>

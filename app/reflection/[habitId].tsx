@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Button, Input, Label, TextField, Typography } from 'heroui-native';
 
+import { BloomHeading } from '@/components/bloom/BloomHeading';
 import { HabitScreenHeader } from '@/components/bloom/HabitScreenHeader';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 import { toLocalDateKey } from '@/lib/bloom/habitMetrics';
@@ -49,11 +50,16 @@ export default function ReflectionScreen() {
         >
           <HabitScreenHeader title="Quick reflection" onBack={closeReflection} />
 
-          <View className="mb-7">
-            <Typography type="h1" className="text-foreground text-3xl font-bold">
+          <View className="mb-8 items-center px-4">
+            <View className="bg-background-tertiary mb-4 size-16 items-center justify-center rounded-full">
+              <Typography type="h3" className="text-accent">
+                B
+              </Typography>
+            </View>
+            <BloomHeading level="hero" className="text-center">
               What got in the way?
-            </Typography>
-            <Typography type="body" className="text-muted mt-2">
+            </BloomHeading>
+            <Typography type="body" className="text-muted mt-2 text-center">
               Choose what best fits {habit.name.toLowerCase()} this time.
             </Typography>
           </View>
@@ -68,7 +74,7 @@ export default function ReflectionScreen() {
                   onPress={() => setReason(option.id)}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: selected }}
-                  className="min-h-14 justify-start"
+                  className="min-h-14 justify-start rounded-2xl"
                 >
                   <Button.Label>{option.label}</Button.Label>
                 </Button>

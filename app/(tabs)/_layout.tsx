@@ -25,13 +25,13 @@ export default function TabLayout() {
             backgroundColor: background,
             borderTopColor: border,
             borderTopWidth: 1,
-            height: 68,
-            paddingTop: 8,
-            paddingBottom: 8,
+            height: 72,
+            paddingTop: 9,
+            paddingBottom: 9,
             shadowColor: 'transparent',
             elevation: 0,
           },
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+          tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
           tabBarActiveTintColor: accent,
           tabBarInactiveTintColor: muted,
         }}
@@ -40,22 +40,26 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Today',
-            tabBarIcon: ({ color, size }) => <House color={color} size={size ?? 23} />,
+            tabBarIcon: ({ color, size }) => (
+              <House color={color} size={size ?? 22} strokeWidth={1.8} />
+            ),
           }}
         />
         <Tabs.Screen
           name="habits"
           options={{
             title: 'Habits',
-            tabBarIcon: ({ color, size }) => <Sprout color={color} size={size ?? 23} />,
+            tabBarIcon: ({ color, size }) => (
+              <Sprout color={color} size={size ?? 22} strokeWidth={1.8} />
+            ),
           }}
         />
         <Tabs.Screen
           name="progress"
           options={{
-            title: 'Progress',
+            title: 'Insights',
             tabBarIcon: ({ color, size }) => (
-              <ChartNoAxesColumnIncreasing color={color} size={size ?? 23} />
+              <ChartNoAxesColumnIncreasing color={color} size={size ?? 22} strokeWidth={1.8} />
             ),
           }}
         />
@@ -63,7 +67,9 @@ export default function TabLayout() {
           name="settings"
           options={{
             title: 'Settings',
-            tabBarIcon: ({ color, size }) => <Settings color={color} size={size ?? 23} />,
+            tabBarIcon: ({ color, size }) => (
+              <Settings color={color} size={size ?? 22} strokeWidth={1.8} />
+            ),
           }}
         />
       </Tabs>

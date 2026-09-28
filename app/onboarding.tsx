@@ -16,6 +16,7 @@ import {
 import { router } from 'expo-router';
 import { Button, Input, Label, TextField, Typography, useThemeColor } from 'heroui-native';
 
+import { BloomHeading } from '@/components/bloom/BloomHeading';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
 import { useBloomStore } from '@/lib/bloom/store';
 import {
@@ -117,12 +118,10 @@ export default function OnboardingScreen() {
               className="flex-1"
             >
               <View className="mb-8 gap-3">
-                <View className="bg-accent-soft size-11 items-center justify-center rounded-2xl">
+                <View className="bg-background-tertiary size-14 items-center justify-center rounded-full">
                   <Sparkles color={accent} size={22} />
                 </View>
-                <Typography type="h1" className="text-foreground text-3xl leading-10 font-bold">
-                  {STEP_TITLES[step]}
-                </Typography>
+                <BloomHeading level="hero">{STEP_TITLES[step]}</BloomHeading>
                 <Typography type="body" className="text-muted max-w-md text-base leading-6">
                   {step === 0 && 'Choose the area where a small, steady change would matter most.'}
                   {step === 1 && 'Keep it personal and specific. You can shape the habits later.'}
@@ -143,7 +142,7 @@ export default function OnboardingScreen() {
                         accessibilityRole="radio"
                         accessibilityState={{ selected: isSelected }}
                         className={cn(
-                          'min-h-16 flex-row items-center rounded-2xl border px-4 active:opacity-80',
+                          'min-h-16 flex-row items-center rounded-[20px] border px-4 active:opacity-80',
                           isSelected ? 'border-accent bg-accent-soft' : 'border-border bg-surface',
                         )}
                       >
@@ -233,14 +232,12 @@ export default function OnboardingScreen() {
               )}
 
               {step === 3 && (
-                <View className="border-border bg-surface gap-4 rounded-3xl border p-6">
+                <View className="border-sage bg-background-tertiary gap-4 rounded-[26px] border p-6">
                   <View className="border-border gap-2 border-b pb-5">
                     <Typography type="body-xs" className="text-muted font-medium">
                       YOUR FOCUS
                     </Typography>
-                    <Typography type="h2" className="text-foreground text-2xl font-bold">
-                      {goalTitle.trim()}
-                    </Typography>
+                    <BloomHeading level="title">{goalTitle.trim()}</BloomHeading>
                   </View>
                   <View className="gap-1 py-1">
                     <Typography type="body-xs" className="text-muted font-medium">

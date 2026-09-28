@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Button, Card, Label, Spinner, TextArea, TextField, Typography } from 'heroui-native';
 
+import { BloomHeading } from '@/components/bloom/BloomHeading';
 import { CoachExchangeCard } from '@/components/bloom/CoachExchangeCard';
 import { HabitScreenHeader } from '@/components/bloom/HabitScreenHeader';
 import { SafeAreaView } from '@/components/ui/primitives/SafeAreaView';
@@ -49,10 +50,22 @@ export default function CoachScreen() {
         >
           <HabitScreenHeader title="Coach" onBack={closeCoach} />
 
-          <Card className="border-border mb-5 rounded-3xl border p-5">
-            <Typography type="h2" className="text-foreground text-xl font-bold">
-              Ask about your habits
+          <View className="mb-7 items-center px-5 text-center">
+            <View className="bg-background-tertiary mb-4 size-16 items-center justify-center rounded-full">
+              <Typography type="h3" className="text-accent">
+                B
+              </Typography>
+            </View>
+            <BloomHeading level="hero" className="text-center">
+              Your Bloom coach
+            </BloomHeading>
+            <Typography type="body-sm" className="text-muted mt-2 text-center">
+              Ask for a small, realistic next step.
             </Typography>
+          </View>
+
+          <Card className="border-border bg-surface mb-5 rounded-[24px] border p-5">
+            <BloomHeading level="section">Ask about your habits</BloomHeading>
             <TextField className="mt-5" isDisabled={isSending}>
               <Label>What would you like help with?</Label>
               <TextArea
@@ -90,11 +103,11 @@ export default function CoachScreen() {
             </Card>
           ) : null}
 
-          <Typography type="h2" className="text-foreground mb-4 text-xl font-bold">
+          <BloomHeading level="section" className="mb-4">
             Recent conversations
-          </Typography>
+          </BloomHeading>
           {coachExchanges.length === 0 ? (
-            <Card className="border-border rounded-3xl border p-5">
+            <Card className="border-border bg-surface rounded-[22px] border p-5">
               <Typography type="body-sm" className="text-muted">
                 Your coaching replies will appear here.
               </Typography>

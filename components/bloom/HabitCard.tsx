@@ -8,7 +8,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Check, ChevronRight, Flame } from 'lucide-react-native';
+import { Check, ChevronRight, Clock3, Flame } from 'lucide-react-native';
 import { Card, Typography, useThemeColor } from 'heroui-native';
 
 import { HabitIcon } from '@/components/bloom/habitVisuals';
@@ -43,8 +43,8 @@ export function HabitCard({ habit, isComplete, onToggle, onPress }: HabitCardPro
     <Animated.View style={animatedStyle}>
       <Card
         className={cn(
-          'rounded-3xl border p-0',
-          isComplete ? 'border-accent/30 bg-accent-soft' : 'border-border bg-surface',
+          'rounded-[22px] border p-0',
+          isComplete ? 'border-accent bg-accent-soft' : 'border-border bg-surface',
         )}
       >
         <View className="min-h-24 flex-row items-center px-4 py-4">
@@ -55,44 +55,30 @@ export function HabitCard({ habit, isComplete, onToggle, onPress }: HabitCardPro
             accessibilityLabel={onPress ? `View ${habit.name}` : undefined}
             className="min-w-0 flex-1 flex-row items-center"
           >
-            <View
-              className={cn(
-                'mr-4 size-12 items-center justify-center rounded-2xl',
-                isComplete ? 'bg-accent/15' : 'bg-background-secondary',
-              )}
-            >
-              <HabitIcon
-                icon={habit.icon}
-                color={isComplete ? accent : muted}
-                size={22}
-                strokeWidth={2.2}
-              />
+            <View className="bg-background-secondary mr-4 size-11 items-center justify-center rounded-full">
+              <HabitIcon icon={habit.icon} color={accent} size={20} strokeWidth={1.8} />
             </View>
 
             <View className="min-w-0 flex-1 gap-1.5">
-              <Typography
-                type="body"
-                className={cn(
-                  'text-foreground font-semibold',
-                  isComplete && 'text-accent-soft-foreground',
-                )}
-                numberOfLines={1}
-              >
+              <Typography type="body" className="text-foreground font-medium" numberOfLines={1}>
                 {habit.name}
               </Typography>
               <View className="flex-row flex-wrap items-center gap-x-3 gap-y-1">
-                <Typography type="body-xs" className="text-muted">
-                  {habit.reminder.enabled ? habit.reminder.time : 'No reminder'}
-                </Typography>
                 <View className="flex-row items-center gap-1">
-                  <Flame color={muted} size={14} />
+                  <Clock3 color={muted} size={13} strokeWidth={1.8} />
+                  <Typography type="body-xs" className="text-muted">
+                    {habit.reminder.enabled ? habit.reminder.time : 'No reminder'}
+                  </Typography>
+                </View>
+                <View className="flex-row items-center gap-1">
+                  <Flame color={muted} size={13} strokeWidth={1.8} />
                   <Typography type="body-xs" className="text-muted">
                     {habit.streak.current} streak
                   </Typography>
                 </View>
               </View>
             </View>
-            {onPress ? <ChevronRight color={muted} size={18} /> : null}
+            {onPress ? <ChevronRight color={muted} size={17} strokeWidth={1.8} /> : null}
           </Pressable>
 
           <Pressable
@@ -102,13 +88,13 @@ export function HabitCard({ habit, isComplete, onToggle, onPress }: HabitCardPro
             accessibilityState={{ checked: isComplete }}
             hitSlop={10}
             className={cn(
-              'ml-3 size-12 items-center justify-center rounded-full border-2 active:opacity-75',
-              isComplete ? 'border-accent bg-accent' : 'border-border bg-background',
+              'ml-3 size-12 items-center justify-center rounded-full border active:opacity-75',
+              isComplete ? 'border-accent bg-accent' : 'border-sage bg-background-secondary',
             )}
           >
             {isComplete ? (
               <Animated.View entering={FadeIn.duration(180)}>
-                <Check color="#FFFFFF" size={22} strokeWidth={3} />
+                <Check color="#FFF9EE" size={21} strokeWidth={2.4} />
               </Animated.View>
             ) : null}
           </Pressable>
