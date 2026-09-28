@@ -62,11 +62,17 @@ export function CoachExchangeCard({
             ) : null}
             {!isResolved ? (
               <View className="mt-4 gap-2">
-                <Button onPress={() => onAccept(exchange.id)}>
-                  <Button.Label>Try this adjustment</Button.Label>
+                <Button className="bg-accent" onPress={() => onAccept(exchange.id)}>
+                  <Button.Label className="text-accent-foreground">
+                    Try this adjustment
+                  </Button.Label>
                 </Button>
-                <Button variant="ghost" onPress={() => onReject(exchange.id)}>
-                  <Button.Label>Not now</Button.Label>
+                <Button
+                  variant="tertiary"
+                  className="border-accent bg-surface border"
+                  onPress={() => onReject(exchange.id)}
+                >
+                  <Button.Label className="text-accent">Not now</Button.Label>
                 </Button>
               </View>
             ) : (

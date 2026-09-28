@@ -73,11 +73,11 @@ export function CoachingCard({ suggestion, onAccept, onReject }: CoachingCardPro
         </Typography>
       </View>
       <View className="gap-2">
-        <Button onPress={onAccept}>
-          <Button.Label>{suggestion.actionLabel}</Button.Label>
+        <Button className="bg-accent" onPress={onAccept}>
+          <Button.Label className="text-accent-foreground">{suggestion.actionLabel}</Button.Label>
         </Button>
-        <Button variant="ghost" onPress={onReject}>
-          <Button.Label>Keep it as is</Button.Label>
+        <Button variant="tertiary" className="border-accent bg-surface border" onPress={onReject}>
+          <Button.Label className="text-accent">Keep it as is</Button.Label>
         </Button>
       </View>
     </Card>

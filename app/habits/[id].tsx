@@ -305,25 +305,27 @@ export default function HabitDetailsScreen() {
         <View className="gap-3">
           <Button
             size="lg"
-            variant="secondary"
+            className="bg-accent"
             onPress={() => {
               setHabitArchived(habit.id, !habit.archivedAt);
               backToHabits();
             }}
           >
             {habit.archivedAt ? (
-              <RotateCcw color={accent} size={19} />
+              <RotateCcw color={accentForeground} size={19} />
             ) : (
-              <Archive color={accent} size={19} />
+              <Archive color={accentForeground} size={19} />
             )}
-            <Button.Label>{habit.archivedAt ? 'Make active' : 'Archive habit'}</Button.Label>
+            <Button.Label className="text-accent-foreground">
+              {habit.archivedAt ? 'Make active' : 'Archive habit'}
+            </Button.Label>
           </Button>
 
           <Dialog isOpen={deleteOpen} onOpenChange={setDeleteOpen}>
             <Dialog.Trigger asChild>
-              <Button size="lg" variant="ghost">
-                <Trash2 color={muted} size={19} />
-                <Button.Label>Delete permanently</Button.Label>
+              <Button size="lg" variant="tertiary" className="border-accent bg-surface border">
+                <Trash2 color={accent} size={19} />
+                <Button.Label className="text-accent">Delete permanently</Button.Label>
               </Button>
             </Dialog.Trigger>
             <Dialog.Portal>
@@ -339,16 +341,23 @@ export default function HabitDetailsScreen() {
                 </View>
                 <View className="gap-3">
                   <Button
+                    className="bg-accent"
                     onPress={() => {
                       deleteHabit(habit.id);
                       setDeleteOpen(false);
                       router.replace('/habits');
                     }}
                   >
-                    <Button.Label>Delete permanently</Button.Label>
+                    <Button.Label className="text-accent-foreground">
+                      Delete permanently
+                    </Button.Label>
                   </Button>
-                  <Button variant="ghost" onPress={() => setDeleteOpen(false)}>
-                    <Button.Label>Keep habit</Button.Label>
+                  <Button
+                    variant="tertiary"
+                    className="border-accent bg-surface border"
+                    onPress={() => setDeleteOpen(false)}
+                  >
+                    <Button.Label className="text-accent">Keep habit</Button.Label>
                   </Button>
                 </View>
               </Dialog.Content>

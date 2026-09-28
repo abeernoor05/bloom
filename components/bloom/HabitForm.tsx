@@ -319,12 +319,16 @@ export function HabitForm({ habit, submitLabel, onSubmit, onCancel }: HabitFormP
           {error}
         </Typography>
       ) : null}
-      <Button size="lg" onPress={submit} className="min-h-14 rounded-full">
-        <Button.Label>{submitLabel}</Button.Label>
+      <Button size="lg" onPress={submit} className="bg-accent min-h-14 rounded-full">
+        <Button.Label className="text-accent-foreground">{submitLabel}</Button.Label>
       </Button>
       {onCancel ? (
-        <Button variant="tertiary" onPress={onCancel} className="min-h-12 rounded-full">
-          <Button.Label>Cancel</Button.Label>
+        <Button
+          variant="tertiary"
+          onPress={onCancel}
+          className="border-accent bg-surface min-h-12 rounded-full border"
+        >
+          <Button.Label className="text-accent">Cancel</Button.Label>
         </Button>
       ) : null}
     </ScrollView>
