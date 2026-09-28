@@ -60,7 +60,7 @@ export function HabitCard({ habit, isComplete, onToggle, onPress }: HabitCardPro
             </View>
 
             <View className="min-w-0 flex-1 gap-1.5">
-              <Typography type="body" className="text-foreground font-medium" numberOfLines={1}>
+              <Typography type="body-sm" className="text-foreground font-medium" numberOfLines={1}>
                 {habit.name}
               </Typography>
               <View className="flex-row flex-wrap items-center gap-x-3 gap-y-1">
