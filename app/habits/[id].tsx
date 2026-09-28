@@ -111,7 +111,7 @@ export default function HabitDetailsScreen() {
 
         <View className="mb-4 flex-row gap-3">
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-xl font-bold">
+            <Typography type="h2" className="text-foreground text-lg font-bold">
               {metrics.current}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
@@ -119,7 +119,7 @@ export default function HabitDetailsScreen() {
             </Typography>
           </Card>
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-xl font-bold">
+            <Typography type="h2" className="text-foreground text-lg font-bold">
               {metrics.best}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
@@ -127,7 +127,7 @@ export default function HabitDetailsScreen() {
             </Typography>
           </Card>
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-xl font-bold">
+            <Typography type="h2" className="text-foreground text-lg font-bold">
               {metrics.scheduledCount > 0 ? `${Math.round(metrics.completionRate * 100)}%` : '—'}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
@@ -138,7 +138,7 @@ export default function HabitDetailsScreen() {
 
         <View className="mb-4 flex-row gap-3">
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-xl font-bold">
+            <Typography type="h2" className="text-foreground text-lg font-bold">
               {metrics.completedCount}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">
@@ -146,7 +146,7 @@ export default function HabitDetailsScreen() {
             </Typography>
           </Card>
           <Card className="border-border flex-1 rounded-[22px] border p-4">
-            <Typography type="h2" className="text-foreground text-xl font-bold">
+            <Typography type="h2" className="text-foreground text-lg font-bold">
               {adjustments.filter((adjustment) => adjustment.habitId === habit.id).length}
             </Typography>
             <Typography type="body-xs" className="text-muted mt-1">

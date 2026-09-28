@@ -11,9 +11,9 @@ interface BloomHeadingProps {
 }
 
 const LEVEL_CLASSES = {
-  hero: 'text-[29px] leading-[35px]',
-  title: 'text-[25px] leading-[31px]',
-  section: 'text-[19px] leading-6',
+  hero: 'text-[26px] leading-8',
+  title: 'text-[23px] leading-[29px]',
+  section: 'text-lg leading-6',
 } as const;
 
 export function BloomHeading({
