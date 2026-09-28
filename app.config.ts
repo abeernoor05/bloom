@@ -45,7 +45,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       'expo-router',
       'expo-font',
-      'expo-splash-screen',
+      ['expo-splash-screen', { backgroundColor: '#193C2B' }],
       'expo-notifications',
       ...nativePlugins,
     ],

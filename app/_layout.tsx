@@ -9,9 +9,10 @@ import {
   Inter_700Bold,
   useFonts,
 } from '@expo-google-fonts/inter';
+import { Lora_400Regular } from '@expo-google-fonts/lora';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Platform } from 'react-native';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import * as DevClient from 'expo-dev-client';
 import { HeroUINativeProvider } from 'heroui-native';
 import { Uniwind } from 'uniwind';
@@ -28,6 +29,7 @@ import { initPostHog } from '@/lib/posthog';
 import { registerServiceWorker } from '@/lib/registerServiceWorker';
 import { reportErrorToParent } from '@/lib/reportPreviewError';
 import { InstallPrompt } from '@/components/InstallPrompt';
+import { BloomSplash } from '@/components/bloom/BloomSplash';
 import { useBloomStore } from '@/lib/bloom/store';
 import { reconcileHabitNotifications } from '@/lib/bloom/notifications';
 
@@ -75,10 +77,11 @@ function AppNavigator() {
   useEffect(() => {
     if (hydrationStatus !== 'ready') return;
     const isOnboarding = segments[0] === 'onboarding';
+    const isWelcome = segments[0] === 'welcome';
 
-    if (!onboardingCompleted && !isOnboarding) {
-      router.replace('/onboarding');
-    } else if (onboardingCompleted && isOnboarding) {
+    if (!onboardingCompleted && !isOnboarding && !isWelcome) {
+      router.replace('/welcome');
+    } else if (onboardingCompleted && (isOnboarding || isWelcome)) {
       router.replace('/(tabs)');
     }
   }, [hydrationStatus, onboardingCompleted, segments]);
@@ -88,6 +91,7 @@ function AppNavigator() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="welcome" options={{ gestureEnabled: false }} />
       <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       <Stack.Screen name="habits/new" />
       <Stack.Screen name="habits/[id]" />
@@ -99,12 +103,15 @@ function AppNavigator() {
 }
 
 export default function RootLayout() {
+  const [showCustomSplash, setShowCustomSplash] = useState(true);
   const [loaded, error] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
+    Lora_400Regular,
   });
+  const finishCustomSplash = useCallback(() => setShowCustomSplash(false), []);
 
   // Report uncaught JS errors and unhandled promise rejections to parent (Bilt preview iframe)
   useEffect(() => {
@@ -193,6 +200,7 @@ export default function RootLayout() {
       <HeroUINativeProvider>
         <AppNavigator />
         <InstallPrompt />
+        {showCustomSplash && <BloomSplash onFinish={finishCustomSplash} />}
       </HeroUINativeProvider>
     </GestureHandlerRootView>
   );
