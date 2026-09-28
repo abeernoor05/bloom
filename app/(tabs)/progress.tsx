@@ -84,7 +84,7 @@ export default function ProgressScreen() {
           <>
             <Card
               className="bg-accent mt-5 rounded-[24px] border-0 px-5 py-5"
-              style={{ borderTopRightRadius: 68 }}
+              style={{ backgroundColor: accent, borderTopRightRadius: 68 }}
             >
               <View className="bg-default mb-4 self-start rounded-full px-3 py-1.5">
                 <Typography type="body-xs" className="text-foreground">
