@@ -1,158 +1,62 @@
-# Welcome to your Bilt project
+# Bloom 🌱
 
-[![Built with Bilt](https://img.shields.io/endpoint?url=https%3A%2F%2Fapp.bilt.me%2Fapi%2Fbadge)](https://bilt.me)
+> A gentle habit coach for building routines that last.
 
-## Project info
+Bloom helps you build habits without the guilt. Set goals, track your daily progress, and get kind, adaptive coaching that adjusts to your real life instead of demanding perfection.
 
-**Project URL**: https://app.bilt.me/agent/2a66526d-c9f9-4c37-b4ee-b07beff80d1b
+## Features
 
-**Project ID**: `2a66526d-c9f9-4c37-b4ee-b07beff80d1b`
+- **Goals and habits**: Organize habits under goals like Health & Fitness, Learning, Productivity, Mental Wellbeing, Sleep and Finance.
+- **Flexible schedules**: Daily, specific weekdays, or a weekly target (e.g. 3–4 days a week).
+- **Reminders**: Set a reminder time for each habit and get a notification when it's due.
+- **Streaks and insights**: See your current and best streaks and your weekly completion rates.
+- **Quick reflections**: Missed a day? Tell Bloom why, with no judgment.
+- **Adaptive coaching**: Bloom uses your reflections to suggest small changes, like a lighter target, a better reminder time, or a gentler weekly frequency.
+- **AI coach**: Ask questions about your habits and get personalized answers and suggestions.
+- **Works everywhere**: iOS, Android and web (installable as a PWA).
 
-## How can I edit this app?
-
-There are several ways of editing your application.
-
-**Use Bilt**
-
-Simply visit your [Bilt Project](https://app.bilt.me/agent/2a66526d-c9f9-4c37-b4ee-b07beff80d1b) and start sending messages. Describe what you want to change, add, or fix in natural language.
-
-Changes made via Bilt are instant - just send a message and your app updates.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can export the source code from Bilt and make changes directly.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Export and clone your Bilt project.
-# (Download source from Bilt or connect to your git repo)
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm install
-
-# Step 4: Start the Expo development server.
-npx expo start
-```
-
-Scan the QR code with Expo Go on your phone to see your app running locally.
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
+## Tech Stack
 
 - React Native
-- Expo
+- Expo and Expo Router
 - TypeScript
+- HeroUI Native (UI components)
+- Expo Notifications (reminders)
 - AsyncStorage (local data persistence)
-- Expo Router (navigation)
 
-All generated automatically by Bilt from your natural language instructions.
+## Getting Started
 
-## How can I test this project?
+### Prerequisites
 
-**Option 1: Preview in Bilt (Recommended)**
+- [Node.js](https://nodejs.org/) and npm
+- [Expo Go](https://expo.dev/go) on your phone (optional)
 
-Open your [Bilt Project](https://app.bilt.me/agent/2a66526d-c9f9-4c37-b4ee-b07beff80d1b) and use the built-in preview.
+### Installation
 
-Open **Deploy & Share** to create a revocable preview link or build the app on your iPhone.
-
-**Option 2: Run Locally**
-
-```sh
+```bash
+git clone https://github.com/abeernoor05/bloom.git
+cd bloom
 npm install
+```
+
+### Run the app
+
+```bash
 npx expo start
 ```
 
-Then scan the QR code with Expo Go.
+Scan the QR code with Expo Go, or press `i` (iOS simulator) or `a` (Android emulator). For the web version, press `w`.
 
-## How can I deploy this project?
+## Project Structure
 
-Open your [Bilt Project](https://app.bilt.me/agent/2a66526d-c9f9-4c37-b4ee-b07beff80d1b), select **Deploy & Share**, then choose **Publish to web**, **Release on App Store**, or **Release on Play Store**.
-
-### Deploy with Bilt
-
-Publishing to web creates a public, installable web app at its own URL. Bilt also guides you through preparing native releases for the App Store and Play Store.
-
-## How can I make changes to my app?
-
-**Via Bilt (Easiest)**
-
-Visit your [Bilt Project](https://app.bilt.me/agent/2a66526d-c9f9-4c37-b4ee-b07beff80d1b) and send a message describing what you want:
-
-- "Add a dark mode toggle"
-- "Change the button color to blue"
-- "Add a new screen for user settings"
-- "Fix the navigation bar spacing"
-
-Bilt understands natural language and updates your app automatically.
-
-**Via Code**
-
-Export the source, make changes in your IDE, and test locally with `npx expo start`.
-
-## Can I use this with the MCP protocol?
-
-Yes! Bilt is available as a remote MCP server at `https://mcp.bilt.me/mcp`.
-
-Connect any MCP-compatible AI agent (Claude Desktop, OpenClaw, etc.) to programmatically build and modify mobile apps.
-
-**Example MCP integration:**
-
-```json
-{
-  "mcpServers": {
-    "bilt": {
-      "transport": {
-        "type": "sse",
-        "url": "https://mcp.bilt.me/mcp/sse",
-        "headers": {
-          "Authorization": "Bearer YOUR_API_KEY"
-        }
-      }
-    }
-  }
-}
+```
+app/          Screens and routes (Today, Habits, Insights, Settings, Coach)
+components/   Reusable UI components
+lib/bloom/    Habit logic: storage, streaks, progress, reminders, coaching
+hooks/        Custom React hooks
+assets/       Images and fonts
 ```
 
-Read more:
+## Author
 
-- [Bilt MCP Documentation](https://bilt.me/docs)
-- [MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers/io.github.buildingapplications%2Fmcp/versions/latest)
-
-## Need help?
-
-- 📚 [Bilt Documentation](https://bilt.me/docs)
-- 💬 [Discord Community](https://discord.gg/3FqNgmSYdZ)
-- 🐦 [Twitter Updates](https://twitter.com/biltmeanapp)
-- 📧 Email: support@bilt.me
-
----
-
-<div align="center">
-
-**Built by AI. No code required.** ✨
-
-[Try Bilt](https://bilt.me) • [View Docs](https://bilt.me/docs) • [Docs MCP Server](https://bilt.me/docs/mcp)
-
-</div>
+Made by [Abeer Noor](https://github.com/abeernoor05)
